@@ -19,3 +19,20 @@ yarn-error.log
 rust/*/target
 # Compiled rust apps (rust modules are recompiled during container start)
 storage/rust-libs/*.so
+
+# IDE
+/.idea
+/.vscode
+*.swp
+.DS_Store
+Thumbs.db
+
+# Windsurf
+/.windsurf/cache
+
+# Backups
+.env.backup
+backups/
+
+# Local development
+/infrastructure/docker/data/

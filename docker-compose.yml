@@ -1,0 +1,5 @@
+﻿version: '3.8'
+
+# Convenience wrapper - actual config in infrastructure/docker/
+include:
+  - infrastructure/docker/docker-compose.yml
