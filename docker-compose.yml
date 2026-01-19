@@ -1,94 +1,155 @@
-services:
+version: '3.8'
 
+services:
   # MariaDB Service
   ogamex-db:
     image: mariadb:11.3.2-jammy
+    container_name: ogamex-mariadb
     restart: unless-stopped
     tty: true
     volumes:
-     - ogame-dbdata:/var/lib/mysql
-     - ./mysql/my.cnf:/etc/mysql/my.cnf
+      - mariadb_data:/var/lib/mysql
     ports:
       - "${DB_EXTERNAL_PORT:-3306}:3306"
     environment:
-      MARIADB_DATABASE: laravel
-      MARIADB_ROOT_PASSWORD: toor
+      MARIADB_DATABASE: ${DB_DATABASE:-ogamex}
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD:-toor}
       SERVICE_TAGS: dev
       SERVICE_NAME: mysql
     networks:
       app-network:
         aliases:
+          - ogamex-mariadb
           - ogame-db
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  # PHP Service
+
+  # Redis Service
+  ogamex-redis:
+    image: redis:7-alpine
+    container_name: ogamex-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+
+  # PHP-FPM Application Service
   ogamex-app:
-    volumes:
-      - ./:/var/www
-      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    container_name: ogamex-app
     build:
       context: .
       dockerfile: Dockerfile
       args:
         OPCACHE_ENABLE: "0"  # Disable opcache for development
-        USE_USER: ${USE_USER_ARG:-yes}  # Defaults to "yes". Set to "no" for GitHub Actions.
+        USE_USER: ${USE_USER_ARG:-yes}
     restart: unless-stopped
     tty: true
+    volumes:
+      - ./:/var/www
+      # Comment out if php/local.ini doesn't exist
+      # - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       CONTAINER_ROLE: app
       SERVICE_NAME: app
       SERVICE_TAGS: dev
+      DB_HOST: ogamex-mariadb
+      DB_DATABASE: ${DB_DATABASE:-ogamex}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-toor}
+      REDIS_HOST: ogamex-redis
     working_dir: /var/www
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000 || [ $? -eq 56 ]"]
-      interval: 10s
-      timeout: 6s
-      retries: 60
     networks:
       - app-network
     depends_on:
-      - ogamex-db
+      ogamex-db:
+        condition: service_healthy
+      ogamex-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php -v || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
-  # Scheduler
+
+  # Scheduler Service
   ogamex-scheduler:
+    container_name: ogamex-scheduler
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        OPCACHE_ENABLE: "0"
+        USE_USER: ${USE_USER_ARG:-yes}
     restart: unless-stopped
+    tty: true
     volumes:
-      - .:/var/www/html
+      - ./:/var/www
     environment:
       CONTAINER_ROLE: scheduler
+      DB_HOST: ogamex-mariadb
+      DB_DATABASE: ${DB_DATABASE:-ogamex}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-toor}
+      REDIS_HOST: ogamex-redis
+    working_dir: /var/www
     networks:
       - app-network
     depends_on:
       ogamex-app:
         condition: service_healthy
 
-  # Queue
+
+  # Queue Worker Service
   ogamex-queue-worker:
+    container_name: ogamex-queue-worker
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        OPCACHE_ENABLE: "0"
+        USE_USER: ${USE_USER_ARG:-yes}
     restart: unless-stopped
+    tty: true
     volumes:
-      - .:/var/www/html
+      - ./:/var/www
     environment:
       CONTAINER_ROLE: queue
+      DB_HOST: ogamex-mariadb
+      DB_DATABASE: ${DB_DATABASE:-ogamex}
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-toor}
+      REDIS_HOST: ogamex-redis
+    working_dir: /var/www
     networks:
       - app-network
     depends_on:
       ogamex-app:
         condition: service_healthy
 
-  # Nginx Service
+
+  # Nginx Web Server
   ogamex-webserver:
     image: nginx:alpine
+    container_name: ogamex-webserver
     restart: unless-stopped
     tty: true
     volumes:
       - ./:/var/www:cached
       - ./nginx/conf.d/:/etc/nginx/conf.d/
-      - ./nginx/ssl/:/etc/nginx/ssl/
+      # Comment out if ssl folder doesn't exist
+      # - ./nginx/ssl/:/etc/nginx/ssl/
     ports:
       - "${HTTP_PORT:-80}:80"
       - "${HTTPS_PORT:-443}:443"
@@ -98,25 +159,34 @@ services:
       ogamex-app:
         condition: service_healthy
 
+
   # PhpMyAdmin
   ogamex-phpmyadmin:
-    image: phpmyadmin
-    restart: always
+    image: phpmyadmin:latest
+    container_name: ogamex-phpmyadmin
+    restart: unless-stopped
     ports:
       - "${PHPMYADMIN_PORT:-8080}:80"
     environment:
-      - PMA_ARBITRARY=1
-      - PMA_HOST=ogame-db
-      - UPLOAD_LIMIT=1G
+      PMA_ARBITRARY: 1
+      PMA_HOST: ogamex-mariadb
+      PMA_USER: root
+      PMA_PASSWORD: ${DB_PASSWORD:-toor}
+      UPLOAD_LIMIT: 1G
     networks:
       - app-network
+    depends_on:
+      ogamex-db:
+        condition: service_healthy
+
 
 # Docker Networks
 networks:
   app-network:
     driver: bridge
 
-# Volumes
+
+# Persistent Volumes
 volumes:
-  ogame-dbdata:
+  mariadb_data:
     driver: local
