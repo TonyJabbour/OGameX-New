@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => Admin::class,
             'firstlogin' => CheckFirstLogin::class,
         ]);
+        // Exclude API auth check routes from CSRF verification
+        $middleware->validateCsrfTokens(except: [
+            'api/auth/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
     })

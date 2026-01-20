@@ -10,10 +10,10 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Styles -->
-    <link href="{{ asset('css/auth.css') }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/onboarding.css') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     @stack('styles')
 </head>
@@ -49,9 +49,8 @@
             
             <!-- Right Panel - Form -->
             <div class="auth-right">
-                <div class="auth-form-container">
-                    @yield('content')
-                </div>
+                @yield('form-content', '')
+                @yield('content', '')
             </div>
         </div>
     </div>
@@ -65,6 +64,6 @@
     
     <!-- Scripts -->
     <script src="{{ asset('js/auth.js') }}"></script>
-    @stack('scripts')
+    @yield('scripts')
 </body>
 </html>

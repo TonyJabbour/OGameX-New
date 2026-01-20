@@ -13,13 +13,13 @@
                     Build your empire, command massive fleets, and dominate the galaxy in the ultimate space strategy game.
                 </p>
                 <div class="hero-buttons">
-                    <a href="{{ route('register') }}" class="btn btn-primary btn-large">
+                    <a href="{{ route('auth.unified') }}" class="btn btn-primary">
                         <span>Play Now</span>
-                        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M5 12h14M12 5l7 7-7 7"/>
+                        <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
                         </svg>
                     </a>
-                    <a href="#features" class="btn btn-secondary btn-large">
+                    <a href="#features" class="btn btn-secondary">
                         <span>Learn More</span>
                     </a>
                 </div>
@@ -204,7 +204,7 @@
             <div class="cta-content">
                 <h2 class="cta-title">Ready to Conquer the Universe?</h2>
                 <p class="cta-subtitle">Join thousands of players in the ultimate space strategy experience</p>
-                <a href="{{ route('register') }}" class="btn btn-primary btn-large btn-glow">
+                <a href="{{ route('auth.unified') }}" class="btn btn-primary btn-large btn-glow">
                     <span>Start Your Journey</span>
                     <svg class="btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14M12 5l7 7-7 7"/>

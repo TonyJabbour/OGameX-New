@@ -146,6 +146,14 @@ class CreateNewUser implements CreatesNewUsers
     public function create(array $input): User
     {
         Validator::make($input, [
+            'username' => [
+                'nullable',
+                'string',
+                'min:3',
+                'max:20',
+                'regex:/^[a-zA-Z0-9]+$/',
+                Rule::unique(User::class),
+            ],
             'email' => [
                 'required',
                 'string',
@@ -154,15 +162,23 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::unique(User::class),
             ],
             'password' => $this->passwordRules(),
+            'planet_name' => [
+                'nullable',
+                'string',
+                'max:20'
+            ],
         ])->validate();
 
         // Add try/catch to retry creating user 5 times because exception could be triggered
         // if the username is already taken.
         for ($attempt = 0; $attempt < 5; $attempt++) {
             try {
+                // Use provided username or generate a unique one
+                $username = !empty($input['username']) ? $input['username'] : $this->generateUniqueName();
+                
                 $user = User::create([
                     'lang' => 'en',
-                    'username' => $this->generateUniqueName(),
+                    'username' => $username,
                     'email' => $input['email'],
                     'password' => Hash::make($input['password']),
                 ]);
@@ -174,7 +190,9 @@ class CreateNewUser implements CreatesNewUsers
                     $user->save();
                 }
 
-                $this->createInitialGameDataForUser($user);
+                // Pass planet name to initial game data creation
+                $planetName = $input['planet_name'] ?? 'Homeworld';
+                $this->createInitialGameDataForUser($user, $planetName);
 
                 return $user;
             } catch (Exception $e) {
@@ -193,9 +211,10 @@ class CreateNewUser implements CreatesNewUsers
      * Create initial data for the player such as planets and tech records.
      *
      * @param User $user
+     * @param string $planetName
      * @throws Exception
      */
-    private function createInitialGameDataForUser($user): void
+    private function createInitialGameDataForUser($user, string $planetName = 'Homeworld'): void
     {
         // Create initial player tech record.
         $tech = new UserTech();
@@ -204,7 +223,8 @@ class CreateNewUser implements CreatesNewUsers
 
         // Create initial planet(s) for the player.
         $playerService = $this->playerServiceFactory->make($user->id);
-        $planetNames = ['Homeworld', 'Colony'];
+        // Use the custom planet name provided by the user for their first planet
+        $planetNames = [$planetName, 'Colony'];
         // The amount of planets to create is defined in the settings and defaults to 1.
         for ($i = 0; $i < $this->settings->registrationPlanetAmount(); $i++) {
             $this->planetServiceFactory->createInitialPlanetForPlayer($playerService, $planetNames[$i === 0 ? 0 : 1]);

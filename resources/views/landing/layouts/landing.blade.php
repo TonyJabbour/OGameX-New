@@ -37,8 +37,8 @@
                     <a href="#features" class="nav-link">Features</a>
                     <a href="#screenshots" class="nav-link">Screenshots</a>
                     <a href="#about" class="nav-link">About</a>
-                    <a href="{{ route('login') }}" class="nav-link nav-login">Login</a>
-                    <a href="{{ route('register') }}" class="btn btn-primary nav-cta">Play Now</a>
+                    <a href="{{ route('auth.unified') }}" class="nav-link nav-login">Login</a>
+                    <a href="{{ route('auth.unified') }}" class="btn btn-primary nav-cta">Play Now</a>
                 </div>
                 <button class="nav-toggle" id="navToggle">
                     <span></span>

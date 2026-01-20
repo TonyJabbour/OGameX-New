@@ -35,6 +35,7 @@ use OGame\Http\Controllers\ShipyardController;
 use OGame\Http\Controllers\ShopController;
 use OGame\Http\Controllers\TechtreeController;
 use OGame\Http\Controllers\LandingController;
+use OGame\Http\Controllers\Api\AuthCheckController;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,6 +50,15 @@ use OGame\Http\Controllers\LandingController;
 
 // Landing page route
 Route::get('/', [LandingController::class, 'index'])->name('landing');
+
+// Unified authentication route
+Route::get('/auth', [LandingController::class, 'unified'])->name('auth.unified');
+
+// API routes for authentication checks (without CSRF middleware)
+Route::prefix('api/auth')->middleware('throttle:60,1')->group(function () {
+    Route::post('/check-email', [AuthCheckController::class, 'checkEmail'])->name('api.auth.check-email');
+    Route::post('/check-username', [AuthCheckController::class, 'checkUsername'])->name('api.auth.check-username');
+});
 
 // Group: all logged in pages:
 Route::middleware(['auth', 'globalgame', 'locale', 'firstlogin'])->group(function () {

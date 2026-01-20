@@ -1,0 +1,314 @@
+/* OGameX Onboarding Flow Styles */
+
+/* Step Navigation */
+.auth-step {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.auth-step.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Back Button */
+.back-button {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    transition: all 0.2s ease;
+}
+
+.back-button:hover {
+    color: var(--primary);
+    transform: translateY(-50%) translateX(-2px);
+}
+
+.form-header {
+    position: relative;
+    padding-left: 40px;
+}
+
+/* Email Display */
+.user-email-display {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.email-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.email-value {
+    font-size: 16px;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Username Availability Indicator */
+.availability-indicator {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.availability-indicator.checking {
+    color: var(--text-secondary);
+}
+
+.availability-indicator.available {
+    color: var(--success);
+}
+
+.availability-indicator.taken {
+    color: var(--danger);
+}
+
+.spinner-small {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+/* Password Strength */
+.password-strength {
+    margin-top: 8px;
+}
+
+.strength-meter {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.strength-bar {
+    height: 100%;
+    background: var(--gradient-primary);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+.strength-bar.weak {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+}
+
+.strength-bar.medium {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.strength-bar.strong {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.strength-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.strength-text.weak {
+    color: #ef4444;
+}
+
+.strength-text.medium {
+    color: #f59e0b;
+}
+
+.strength-text.strong {
+    color: #10b981;
+}
+
+/* Helper Text */
+.helper-text {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* Planet Preview */
+.planet-preview {
+    display: flex;
+    gap: 24px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.planet-image {
+    flex-shrink: 0;
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.2), transparent);
+    border-radius: 50%;
+    position: relative;
+}
+
+.planet-image::before {
+    content: '';
+    position: absolute;
+    inset: -10px;
+    background: conic-gradient(from 180deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    border-radius: 50%;
+    animation: orbitRotate 10s linear infinite;
+}
+
+@keyframes orbitRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.planet-image img {
+    width: 100px;
+    height: 100px;
+    filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.5));
+}
+
+.planet-info {
+    flex: 1;
+}
+
+.planet-info p {
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.starting-resources {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.starting-resources li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.resource-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.resource-icon.metal {
+    background: linear-gradient(135deg, #6b7280, #9ca3af);
+}
+
+.resource-icon.crystal {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+}
+
+.resource-icon.deuterium {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+}
+
+.resource-icon.energy {
+    background: linear-gradient(135deg, #fbbf24, #fde047);
+}
+
+/* Glow Button */
+.btn-glow {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-glow::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-glow:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Loading Spinner */
+.btn-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .planet-preview {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .starting-resources {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-header {
+        padding-left: 0;
+    }
+    
+    .back-button {
+        position: static;
+        transform: none;
+        margin-bottom: 12px;
+    }
+}

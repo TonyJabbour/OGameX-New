@@ -69,4 +69,18 @@ class LandingController extends Controller
 
         return view('auth.register');
     }
+
+    /**
+     * Show the unified authentication page
+     * 
+     * @return View
+     */
+    public function unified()
+    {
+        if (Auth::check()) {
+            return redirect()->route('overview.index');
+        }
+
+        return view('auth.unified');
+    }
 }
