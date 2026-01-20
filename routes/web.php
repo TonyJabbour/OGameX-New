@@ -34,6 +34,7 @@ use OGame\Http\Controllers\ServerSettingsController;
 use OGame\Http\Controllers\ShipyardController;
 use OGame\Http\Controllers\ShopController;
 use OGame\Http\Controllers\TechtreeController;
+use OGame\Http\Controllers\LandingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +47,8 @@ use OGame\Http\Controllers\TechtreeController;
 |
 */
 
-Route::redirect('/', '/overview', 301);
+// Landing page route
+Route::get('/', [LandingController::class, 'index'])->name('landing');
 
 // Group: all logged in pages:
 Route::middleware(['auth', 'globalgame', 'locale', 'firstlogin'])->group(function () {

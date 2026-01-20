@@ -44,14 +44,14 @@ class FortifyServiceProvider extends ServiceProvider
         });
 
         Fortify::loginView(function () {
-            return view('outgame.login');
+            return view('auth.login');
         });
 
-        /*Fortify::registerView(function () {
+        Fortify::registerView(function () {
             return view('auth.register');
         });
 
-        Fortify::requestPasswordResetLinkView(function () {
+        /*Fortify::requestPasswordResetLinkView(function () {
             return view('auth.forgot-password');
         });
 
