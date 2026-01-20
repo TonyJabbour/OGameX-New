@@ -14,7 +14,8 @@ yarn-error.log
 .phpunit.cache
 .sql
 .codebuddy
-
+/nginx/ssl/*.crt
+/nginx/ssl/*.key
 # Rust compilation dirs
 rust/*/target
 # Compiled rust apps (rust modules are recompiled during container start)
