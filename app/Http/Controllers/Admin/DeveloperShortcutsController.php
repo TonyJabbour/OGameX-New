@@ -26,13 +26,7 @@ class DeveloperShortcutsController extends OGameController
      */
     public function index(PlayerService $playerService, SettingsService $settingsService): View
     {
-        // Get all unit objects
-        $units = ObjectService::getUnitObjects();
-
         return view('admin.developer-tools')->with([
-            'units' => $units,
-            'buildings' => [...ObjectService::getBuildingObjects(), ...ObjectService::getStationObjects()],
-            'research' => ObjectService::getResearchObjects(),
             'currentPlanet' => $playerService->planets->current(),
             'settings' => $settingsService,
         ]);
@@ -359,5 +353,46 @@ class DeveloperShortcutsController extends OGameController
         $debrisField->save();
 
         return redirect()->back()->with('success', 'Debris field created/updated successfully at ' . $coordinate->asString());
+    }
+
+    /**
+     * Clear application caches.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function clearCache(Request $request)
+    {
+        $type = $request->input('type', 'all');
+        
+        try {
+            switch ($type) {
+                case 'view':
+                    \Illuminate\Support\Facades\Artisan::call('view:clear');
+                    $message = 'View cache cleared successfully';
+                    break;
+                case 'route':
+                    \Illuminate\Support\Facades\Artisan::call('route:clear');
+                    $message = 'Route cache cleared successfully';
+                    break;
+                case 'config':
+                    \Illuminate\Support\Facades\Artisan::call('config:clear');
+                    $message = 'Config cache cleared successfully';
+                    break;
+                case 'all':
+                    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+                    \Illuminate\Support\Facades\Artisan::call('view:clear');
+                    \Illuminate\Support\Facades\Artisan::call('route:clear');
+                    \Illuminate\Support\Facades\Artisan::call('config:clear');
+                    $message = 'All caches cleared successfully';
+                    break;
+                default:
+                    return response()->json(['error' => 'Invalid cache type'], 400);
+            }
+            
+            return response()->json(['message' => $message]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to clear cache: ' . $e->getMessage()], 500);
+        }
     }
 }

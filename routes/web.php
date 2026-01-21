@@ -249,4 +249,17 @@ Route::middleware(['auth', 'globalgame', 'locale', 'admin'])->prefix('admin')->n
     Route::post('/developer-tools/resources', [DeveloperShortcutsController::class, 'updateResources'])->name('developershortcuts.update-resources');
     Route::post('/developer-tools/create-at-coords', [DeveloperShortcutsController::class, 'createAtCoords'])->name('developershortcuts.create-at-coords');
     Route::post('/developer-tools/create-debris', [DeveloperShortcutsController::class, 'createDebris'])->name('developershortcuts.create-debris');
+    Route::post('/developer-tools/clear-cache', [DeveloperShortcutsController::class, 'clearCache'])->name('developershortcuts.clear-cache');
+    
+    // User Management
+    Route::get('/users', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'index'])->name('users.index');
+    Route::get('/users/{id}', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'show'])->name('users.show');
+    Route::post('/users/{id}/update', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('users.update');
+    Route::post('/users/{id}/delete', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'delete'])->name('users.delete');
+    
+    // Image Management
+    Route::get('/images', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'index'])->name('images.index');
+    Route::post('/images/upload', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'upload'])->name('images.upload');
+    Route::post('/images/delete', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'delete'])->name('images.delete');
+    Route::post('/images/rename', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'rename'])->name('images.rename');
 });

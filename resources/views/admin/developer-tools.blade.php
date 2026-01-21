@@ -26,28 +26,29 @@
 <div class="tab-content" id="quick-tab">
     <div class="card">
         <div class="card-header">Current Planet Tools</div>
+        <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">Current Planet: <strong>{{ $currentPlanet->getPlanetName() }}</strong> ({{ $currentPlanet->getPlanetCoordinates()->asString() }})</p>
         
         <form action="{{ route('admin.developershortcuts.update-resources') }}" method="POST">
             @csrf
+            <input type="hidden" name="galaxy" value="{{ $currentPlanet->getPlanetCoordinates()->galaxy }}">
+            <input type="hidden" name="system" value="{{ $currentPlanet->getPlanetCoordinates()->system }}">
+            <input type="hidden" name="position" value="{{ $currentPlanet->getPlanetCoordinates()->position }}">
+            <input type="hidden" name="update_resources_planet" value="1">
+            
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
                 <div class="form-group">
                     <label class="form-label">Metal</label>
-                    <input type="number" name="metal" class="form-input" value="0" step="1000">
+                    <input type="number" name="metal" class="form-input" value="1000000" step="1000">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Crystal</label>
-                    <input type="number" name="crystal" class="form-input" value="0" step="1000">
+                    <input type="number" name="crystal" class="form-input" value="1000000" step="1000">
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Deuterium</label>
-                    <input type="number" name="deuterium" class="form-input" value="0" step="1000">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Dark Matter</label>
-                    <input type="number" name="dark_matter" class="form-input" value="0" step="100">
+                    <input type="number" name="deuterium" class="form-input" value="500000" step="1000">
                 </div>
             </div>
             
