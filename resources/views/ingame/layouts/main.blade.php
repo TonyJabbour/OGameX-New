@@ -3,22 +3,7 @@
         <!DOCTYPE html>
 <html lang="{{ app()->getLocale() }}">
 <head>
-    <!--
-     ===========================================
-       ____   _____                     __   __
-      / __ \ / ____|                    \ \ / /
-     | |  | | |  __  __ _ _ __ ___   ___ \ V /
-     | |  | | | |_ |/ _` | '_ ` _ \ / _ \ > <
-     | |__| | |__| | (_| | | | | | |  __// . \
-      \____/ \_____|\__,_|_| |_| |_|\___/_/ \_\
-     ===========================================
 
-     Powered by OGameX - Explore the universe! Conquer your enemies!
-     GitHub: https://github.com/lanedirt/OGameX
-     Version: {{ \OGame\Facades\GitInfoUtil::getAppVersionBranchCommit() }}
-
-    This application is released under the MIT License. For more details, visit the GitHub repository.
-    -->
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="apple-touch-icon" href="/img/icons/20da7e6c416e6cd5f8544a73f588e5.png"/>
@@ -1831,15 +1816,7 @@ However, the Space Dock's engineers think that some of the remains can be salvag
                 </div>
             </div>
         </div>
-        <div id="bannerSkyscrapercomponent" class="">
-            <div id="banner_skyscraper" class="desktop" name="banner_skyscraper">
-                <div style="position: relative;">
-                    <a class="tooltipLeft " title="" href="#TODO=shop">
-                        <img src="/img/banners/de0dadddb0285ba78b026ce18fc898.jpg" alt="">
-                    </a>
-                </div>
-            </div>
-        </div>
+
     </div>
 </div>
 
