@@ -266,12 +266,11 @@ Route::middleware(['auth', 'globalgame', 'locale', 'admin'])->prefix('admin')->n
     Route::post('/users/{id}/delete', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'delete'])->name('users.delete');
     Route::post('/users/{id}/ban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'ban'])->name('users.ban');
     Route::post('/users/{id}/unban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'unban'])->name('users.unban');
-    Route::post('/users/{id}/ban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'ban'])->name('users.ban');
-    Route::post('/users/{id}/unban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'unban'])->name('users.unban');
     
     // Image Management
     Route::get('/images', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'index'])->name('images.index');
     Route::post('/images/upload', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'upload'])->name('images.upload');
     Route::post('/images/delete', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'delete'])->name('images.delete');
-    Route::post('/images/rename', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'rename'])->name('images.rename');
+    Route::post('/images/replace', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'replace'])->name('images.replace');
+    Route::post('/images/archive-unused', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'archiveUnused'])->name('images.archive-unused');
 });

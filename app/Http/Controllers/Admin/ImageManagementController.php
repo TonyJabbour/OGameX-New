@@ -39,7 +39,7 @@ class ImageManagementController extends OGameController
         // Scan for images
         $images = [];
         
-        if ($category === 'all') {
+        if ($category === 'all' || $category === 'unused') {
             // Scan all subdirectories
             foreach ($categories as $cat => $label) {
                 $categoryPath = $basePath . '/' . $cat;
@@ -88,10 +88,42 @@ class ImageManagementController extends OGameController
             $image['is_used'] = $image['usage_count'] > 0;
         }
         
+        // Filter based on category
+        if ($category === 'unused') {
+            // Show only unused images
+            $images = array_filter($images, function($img) {
+                return !$img['is_used'];
+            });
+        } elseif ($category !== 'all') {
+            // For specific categories, show all images from that category
+            $images = array_filter($images, function($img) use ($category) {
+                return $img['category'] === $category;
+            });
+        }
+        // For 'all', show everything (both used and unused)
+        
+        // Count unused images for the filter
+        $unusedCount = 0;
+        $allImages = [];
+        foreach ($categories as $cat => $label) {
+            $categoryPath = $basePath . '/' . $cat;
+            if (is_dir($categoryPath)) {
+                $files = glob($categoryPath . '/*.{jpg,jpeg,png,gif,webp,svg}', GLOB_BRACE);
+                foreach ($files as $file) {
+                    $fileName = basename($file);
+                    $isUsed = isset($imageUsage[$fileName]) && $imageUsage[$fileName] > 0;
+                    if (!$isUsed) {
+                        $unusedCount++;
+                    }
+                }
+            }
+        }
+        
         return view('admin.images.index')->with([
-            'images' => $images,
+            'images' => array_values($images),
             'categories' => $categories,
             'currentCategory' => $category,
+            'unusedCount' => $unusedCount,
         ]);
     }
     
@@ -113,30 +145,50 @@ class ImageManagementController extends OGameController
         foreach ($searchPaths as $path) {
             if (!is_dir($path)) continue;
             
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path)
-            );
-            
-            foreach ($iterator as $file) {
-                if (!$file->isFile()) continue;
+            try {
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS)
+                );
                 
-                $extension = $file->getExtension();
-                if (!in_array($extension, ['php', 'blade', 'css', 'js'])) continue;
-                
-                $content = file_get_contents($file->getPathname());
-                
-                // Search for image references
-                // Patterns: /img/..., asset('img/...), url('/img/...)
-                preg_match_all('/\/img\/[\w\/\-]+\/(\w+\.(?:jpg|jpeg|png|gif|webp|svg))/i', $content, $matches);
-                
-                if (!empty($matches[1])) {
-                    foreach ($matches[1] as $imageName) {
-                        if (!isset($usage[$imageName])) {
-                            $usage[$imageName] = 0;
+                foreach ($iterator as $file) {
+                    if (!$file->isFile()) continue;
+                    
+                    $extension = $file->getExtension();
+                    if (!in_array($extension, ['php', 'blade', 'css', 'js', 'html'])) continue;
+                    
+                    $content = @file_get_contents($file->getPathname());
+                    if ($content === false) continue;
+                    
+                    // Multiple patterns to catch all image references
+                    $patterns = [
+                        // Standard paths: /img/category/filename.ext
+                        '/\/img\/[\w\/\-]+\/([\w\-\.]+\.(?:jpg|jpeg|png|gif|webp|svg))/i',
+                        // CSS url() with quotes: url('/img/...')
+                        '/url\([\'"]?\/img\/[\w\/\-]+\/([\w\-\.]+\.(?:jpg|jpeg|png|gif|webp|svg))[\'"]?\)/i',
+                        // Asset helper: asset('img/...')
+                        '/asset\([\'"]img\/[\w\/\-]+\/([\w\-\.]+\.(?:jpg|jpeg|png|gif|webp|svg))[\'"]\)/i',
+                        // Background-image in style attributes
+                        '/background[\-\w]*:[\s]*url\([\'"]?\/img\/[\w\/\-]+\/([\w\-\.]+\.(?:jpg|jpeg|png|gif|webp|svg))[\'"]?\)/i',
+                        // Src attributes
+                        '/src=[\'"]?\/img\/[\w\/\-]+\/([\w\-\.]+\.(?:jpg|jpeg|png|gif|webp|svg))[\'"]?/i',
+                    ];
+                    
+                    foreach ($patterns as $pattern) {
+                        preg_match_all($pattern, $content, $matches);
+                        
+                        if (!empty($matches[1])) {
+                            foreach ($matches[1] as $imageName) {
+                                if (!isset($usage[$imageName])) {
+                                    $usage[$imageName] = 0;
+                                }
+                                $usage[$imageName]++;
+                            }
                         }
-                        $usage[$imageName]++;
                     }
                 }
+            } catch (\Exception $e) {
+                // Skip directories that can't be read
+                continue;
             }
         }
         
@@ -199,29 +251,96 @@ class ImageManagementController extends OGameController
     }
 
     /**
-     * Rename an image.
+     * Replace an image with a new file (keeps same filename).
      *
      * @param Request $request
      * @return RedirectResponse
      */
-    public function rename(Request $request): RedirectResponse
+    public function replace(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp,svg|max:5120',
             'old_path' => 'required|string',
-            'new_name' => 'required|string|max:100',
         ]);
         
         $oldPath = public_path($validated['old_path']);
-        $extension = pathinfo($oldPath, PATHINFO_EXTENSION);
-        $directory = dirname($oldPath);
-        $newFilename = Str::slug($validated['new_name']) . '.' . $extension;
-        $newPath = $directory . '/' . $newFilename;
         
-        if (file_exists($oldPath)) {
-            rename($oldPath, $newPath);
-            return redirect()->back()->with('success', "Image renamed to: {$newFilename}");
+        if (!file_exists($oldPath)) {
+            return redirect()->back()->with('error', 'Original image not found');
         }
         
-        return redirect()->back()->with('error', 'Image not found');
+        $file = $request->file('image');
+        $filename = basename($oldPath);
+        $directory = dirname($oldPath);
+        
+        // Delete old file
+        unlink($oldPath);
+        
+        // Move new file with same name
+        $file->move($directory, $filename);
+        
+        return redirect()->back()->with('success', "Image replaced successfully: {$filename}");
+    }
+    
+    /**
+     * Archive all unused images by moving them to an archive folder.
+     *
+     * @return RedirectResponse
+     */
+    public function archiveUnused(): RedirectResponse
+    {
+        $basePath = public_path('img');
+        $archivePath = public_path('img/archive');
+        
+        // Create archive directory if it doesn't exist
+        if (!is_dir($archivePath)) {
+            mkdir($archivePath, 0755, true);
+        }
+        
+        // Get image usage
+        $imageUsage = $this->scanImageUsage();
+        
+        $movedCount = 0;
+        $errors = [];
+        
+        // Scan all directories
+        if (is_dir($basePath)) {
+            $dirs = glob($basePath . '/*', GLOB_ONLYDIR);
+            foreach ($dirs as $dir) {
+                $dirName = basename($dir);
+                
+                // Skip archive directory itself
+                if ($dirName === 'archive') continue;
+                
+                $files = glob($dir . '/*.{jpg,jpeg,png,gif,webp,svg}', GLOB_BRACE);
+                foreach ($files as $file) {
+                    $fileName = basename($file);
+                    $isUsed = isset($imageUsage[$fileName]) && $imageUsage[$fileName] > 0;
+                    
+                    if (!$isUsed) {
+                        // Create category subfolder in archive
+                        $archiveCategoryPath = $archivePath . '/' . $dirName;
+                        if (!is_dir($archiveCategoryPath)) {
+                            mkdir($archiveCategoryPath, 0755, true);
+                        }
+                        
+                        $destination = $archiveCategoryPath . '/' . $fileName;
+                        
+                        // Move file
+                        if (rename($file, $destination)) {
+                            $movedCount++;
+                        } else {
+                            $errors[] = $fileName;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (!empty($errors)) {
+            return redirect()->back()->with('error', "Archived {$movedCount} images, but failed to move: " . implode(', ', $errors));
+        }
+        
+        return redirect()->back()->with('success', "Successfully archived {$movedCount} unused images to /img/archive/");
     }
 }

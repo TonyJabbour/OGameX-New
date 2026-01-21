@@ -20,19 +20,38 @@
 
 <!-- Category Filter -->
 <div class="card" style="margin-bottom: 2rem;">
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <a href="{{ route('admin.images.index', ['category' => 'all']) }}" 
-           class="btn {{ $currentCategory === 'all' ? 'btn-primary' : 'btn-secondary' }}" 
-           style="padding: 0.5rem 1rem;">
-            All ({{ count($images) }})
-        </a>
-        @foreach($categories as $key => $label)
-            <a href="{{ route('admin.images.index', ['category' => $key]) }}" 
-               class="btn {{ $currentCategory === $key ? 'btn-primary' : 'btn-secondary' }}" 
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ route('admin.images.index', ['category' => 'all']) }}" 
+               class="btn {{ $currentCategory === 'all' ? 'btn-primary' : 'btn-secondary' }}" 
                style="padding: 0.5rem 1rem;">
-                {{ $label }}
+                All ({{ count($images) }})
             </a>
-        @endforeach
+            @foreach($categories as $key => $label)
+                <a href="{{ route('admin.images.index', ['category' => $key]) }}" 
+                   class="btn {{ $currentCategory === $key ? 'btn-primary' : 'btn-secondary' }}" 
+                   style="padding: 0.5rem 1rem;">
+                    {{ $label }}
+                </a>
+            @endforeach
+            <a href="{{ route('admin.images.index', ['category' => 'unused']) }}" 
+               class="btn {{ $currentCategory === 'unused' ? 'btn-primary' : 'btn-secondary' }}" 
+               style="padding: 0.5rem 1rem; background: {{ $currentCategory === 'unused' ? '' : 'rgba(100, 116, 139, 0.2)' }}; border-color: rgba(100, 116, 139, 0.4);">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" style="display: inline-block; vertical-align: middle; margin-right: 0.25rem;">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+                Unused ({{ $unusedCount }})
+            </a>
+        </div>
+        
+        @if($unusedCount > 0)
+            <button onclick="archiveUnused()" class="btn btn-warning">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                </svg>
+                Archive All Unused ({{ $unusedCount }})
+            </button>
+        @endif
     </div>
 </div>
 
@@ -41,7 +60,11 @@
     <div class="card-header">
         Images 
         @if($currentCategory !== 'all')
-            - {{ $categories[$currentCategory] }}
+            @if($currentCategory === 'unused')
+                - Unused
+            @else
+                - {{ $categories[$currentCategory] }}
+            @endif
         @endif
         ({{ count($images) }})
     </div>
@@ -49,7 +72,26 @@
     @if(count($images) > 0)
         <div class="image-grid">
             @foreach($images as $image)
-                <div class="image-card">
+                <div class="image-card" style="position: relative;">
+                    <!-- Usage Status Badge -->
+                    <div style="position: absolute; top: 0.75rem; right: 0.75rem; z-index: 10;">
+                        @if($image['is_used'])
+                            <span class="badge badge-success" style="display: flex; align-items: center; gap: 0.375rem; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);">
+                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                                Used {{ $image['usage_count'] }}x
+                            </span>
+                        @else
+                            <span class="badge" style="background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.4); display: flex; align-items: center; gap: 0.375rem;">
+                                <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                                Unused
+                            </span>
+                        @endif
+                    </div>
+                    
                     <div class="image-preview">
                         <img src="{{ $image['path'] }}" alt="{{ $image['name'] }}" loading="lazy">
                         <div class="image-actions">
@@ -58,9 +100,9 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                                 </svg>
                             </button>
-                            <button onclick="renameImage('{{ $image['path'] }}', '{{ $image['name'] }}')" class="btn btn-secondary" style="padding: 0.625rem;" title="Rename">
+                            <button onclick="openReplaceModal('{{ $image['path'] }}', '{{ $image['name'] }}')" class="btn btn-secondary" style="padding: 0.625rem;" title="Replace Image">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                                 </svg>
                             </button>
                             <button onclick="deleteImage('{{ $image['path'] }}', '{{ $image['name'] }}')" class="btn btn-danger" style="padding: 0.625rem;" title="Delete">
@@ -147,16 +189,71 @@
     </div>
 </div>
 
-<!-- Hidden Forms for Actions -->
+<!-- Replace Image Modal -->
+<div class="modal-overlay" id="replaceModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Replace Image</h3>
+            <button class="modal-close" onclick="Modal.close('replaceModal')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1.5rem;">
+                <div style="display: flex; gap: 0.75rem;">
+                    <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; color: var(--warning);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <div>
+                        <div style="font-weight: 600; color: var(--warning); margin-bottom: 0.25rem;">Important</div>
+                        <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                            The new image will replace the existing file with the same filename. This ensures all code references remain valid.
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Current Image:</div>
+                <div style="font-weight: 600; font-family: monospace; color: var(--primary);" id="replaceImageName"></div>
+            </div>
+            
+            <form id="replaceForm" action="{{ route('admin.images.replace') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="old_path" id="replaceOldPath">
+                
+                <div class="dropzone" onclick="document.getElementById('replaceInput').click()" style="margin-bottom: 1.5rem;">
+                    <svg class="dropzone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                    <div class="dropzone-text">Drop new image here or click to browse</div>
+                    <div class="dropzone-hint">Must be same format as original</div>
+                    <input type="file" id="replaceInput" name="image" accept="image/*" style="display: none;">
+                </div>
+                
+                <div id="replacePreviewContainer" style="display: none; text-align: center;">
+                    <img id="replacePreview" style="max-width: 100%; max-height: 300px; border-radius: 0.75rem; border: 2px solid var(--border);">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="Modal.close('replaceModal')" class="btn btn-secondary">Cancel</button>
+            <button onclick="submitReplace()" class="btn btn-primary">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                </svg>
+                Replace Image
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Form for Delete -->
 <form id="deleteForm" action="{{ route('admin.images.delete') }}" method="POST" style="display: none;">
     @csrf
     <input type="hidden" name="path" id="deleteImagePath">
-</form>
-
-<form id="renameForm" action="{{ route('admin.images.rename') }}" method="POST" style="display: none;">
-    @csrf
-    <input type="hidden" name="old_path" id="renameOldPath">
-    <input type="hidden" name="new_name" id="renameNewName">
 </form>
 
 @push('scripts')
@@ -167,6 +264,51 @@ function copyPath(path) {
     }).catch(() => {
         Toast.show('Failed to copy path', 'error');
     });
+}
+
+function openReplaceModal(path, name) {
+    document.getElementById('replaceOldPath').value = path;
+    document.getElementById('replaceImageName').textContent = name;
+    document.getElementById('replacePreviewContainer').style.display = 'none';
+    document.getElementById('replaceInput').value = '';
+    Modal.open('replaceModal');
+}
+
+async function submitReplace() {
+    const form = document.getElementById('replaceForm');
+    const fileInput = document.getElementById('replaceInput');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        Toast.show('Please select an image to upload', 'warning');
+        return;
+    }
+    
+    const modalBtn = document.querySelector('#replaceModal .modal-footer .btn-primary');
+    const originalHTML = modalBtn.innerHTML;
+    
+    modalBtn.disabled = true;
+    modalBtn.innerHTML = '<span class="spinner"></span> Replacing...';
+    
+    try {
+        const formData = new FormData(form);
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            Toast.show('Image replaced successfully', 'success');
+            Modal.close('replaceModal');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            throw new Error('Replace failed');
+        }
+    } catch (error) {
+        Toast.show('Failed to replace image', 'error');
+    } finally {
+        modalBtn.disabled = false;
+        modalBtn.innerHTML = originalHTML;
+    }
 }
 
 async function deleteImage(path, name) {
@@ -203,41 +345,22 @@ async function deleteImage(path, name) {
     }
 }
 
-async function renameImage(path, currentName) {
-    const newName = prompt('Enter new name (without extension):', currentName.replace(/\.[^/.]+$/, ''));
-    if (!newName || !newName.trim()) return;
-    
-    try {
-        const formData = new FormData();
-        formData.append('old_path', path);
-        formData.append('new_name', newName.trim());
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-        
-        const response = await fetch('{{ route('admin.images.rename') }}', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (response.ok) {
-            Toast.show('Image renamed successfully', 'success');
-            // Update image name in DOM
-            const imageCard = Array.from(document.querySelectorAll('.image-card')).find(card => {
-                return card.querySelector('img')?.src.includes(path);
-            });
-            if (imageCard) {
-                const nameElement = imageCard.querySelector('.image-name');
-                if (nameElement) {
-                    const extension = currentName.split('.').pop();
-                    nameElement.textContent = newName.trim() + '.' + extension;
-                }
+// Preview for replace modal
+document.getElementById('replaceInput')?.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById('replacePreview');
+            const container = document.getElementById('replacePreviewContainer');
+            if (preview && container) {
+                preview.src = e.target.result;
+                container.style.display = 'block';
             }
-        } else {
-            throw new Error('Rename failed');
-        }
-    } catch (error) {
-        Toast.show('Failed to rename image', 'error');
+        };
+        reader.readAsDataURL(file);
     }
-}
+});
 
 // Image preview on file select
 document.getElementById('imageInput')?.addEventListener('change', function(e) {
@@ -255,6 +378,32 @@ document.getElementById('imageInput')?.addEventListener('change', function(e) {
         reader.readAsDataURL(file);
     }
 });
+
+async function archiveUnused() {
+    if (!confirm(`Archive all {{ $unusedCount }} unused images? They will be moved to /img/archive/ organized by category.`)) return;
+    
+    try {
+        const formData = new FormData();
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+        
+        const response = await fetch('{{ route('admin.images.archive-unused') }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            Toast.show('Unused images archived successfully', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            throw new Error('Archive failed');
+        }
+    } catch (error) {
+        Toast.show('Failed to archive images', 'error');
+    }
+}
 
 // Upload form with AJAX
 document.getElementById('uploadForm')?.addEventListener('submit', async function(e) {
