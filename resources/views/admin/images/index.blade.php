@@ -162,7 +162,17 @@ async function deleteImage(path, name) {
         
         if (response.ok) {
             Toast.show('Image deleted successfully', 'success');
-            setTimeout(() => window.location.reload(), 1000);
+            // Remove image card from DOM
+            event.target.closest('.image-card').remove();
+            // Update count
+            const header = document.querySelector('.card-header');
+            if (header) {
+                const countMatch = header.textContent.match(/\((\d+)\)/);
+                if (countMatch) {
+                    const newCount = parseInt(countMatch[1]) - 1;
+                    header.textContent = header.textContent.replace(/\(\d+\)/, `(${newCount})`);
+                }
+            }
         } else {
             throw new Error('Delete failed');
         }
@@ -188,7 +198,17 @@ async function renameImage(path, currentName) {
         
         if (response.ok) {
             Toast.show('Image renamed successfully', 'success');
-            setTimeout(() => window.location.reload(), 1000);
+            // Update image name in DOM
+            const imageCard = Array.from(document.querySelectorAll('.image-card')).find(card => {
+                return card.querySelector('img')?.src.includes(path);
+            });
+            if (imageCard) {
+                const nameElement = imageCard.querySelector('.image-name');
+                if (nameElement) {
+                    const extension = currentName.split('.').pop();
+                    nameElement.textContent = newName.trim() + '.' + extension;
+                }
+            }
         } else {
             throw new Error('Rename failed');
         }
@@ -232,8 +252,10 @@ document.getElementById('uploadForm')?.addEventListener('submit', async function
         });
         
         if (response.ok) {
-            Toast.show('Image uploaded successfully', 'success');
-            setTimeout(() => window.location.reload(), 1500);
+            Toast.show('Image uploaded successfully. Refresh to see new image.', 'success');
+            // Reset form
+            this.reset();
+            document.getElementById('imagePreviewContainer').style.display = 'none';
         } else {
             throw new Error('Upload failed');
         }

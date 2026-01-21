@@ -156,109 +156,450 @@
 
 <!-- Character Tab -->
 <div class="tab-content" id="character-tab" style="display: none;">
+    <!-- Current Class Display -->
+    <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border: 2px solid rgba(59, 130, 246, 0.3); margin-bottom: 2rem;">
+        <div style="text-align: center;">
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Current Character Class</div>
+            <div style="font-size: 2.5rem; font-weight: 900; font-family: 'Orbitron', sans-serif; background: linear-gradient(135deg, #60a5fa, #a78bfa, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem;">
+                @if($user->character_class === 1)
+                    COLLECTOR
+                @elseif($user->character_class === 2)
+                    GENERAL
+                @elseif($user->character_class === 3)
+                    DISCOVERER
+                @else
+                    NONE
+                @endif
+            </div>
+            @if($user->character_class_changed_at)
+                <div style="color: var(--text-muted); font-size: 0.8125rem;">Selected {{ $user->character_class_changed_at->diffForHumans() }}</div>
+            @endif
+        </div>
+    </div>
+    
+    <!-- Class Selection -->
     <div class="card">
-        <div class="card-header">Character Class</div>
+        <div class="card-header">Change Character Class</div>
         
         <form id="characterForm" onsubmit="updateUser(event, 'character')">
             <div class="form-group">
-                <label class="form-label">Character Class</label>
-                <select name="character_class" class="form-input">
-                    <option value="" {{ $user->character_class === null ? 'selected' : '' }}>None</option>
-                    <option value="1" {{ $user->character_class === 1 ? 'selected' : '' }}>Collector (+25% Production)</option>
-                    <option value="2" {{ $user->character_class === 2 ? 'selected' : '' }}>General (+10% Fleet Capacity)</option>
-                    <option value="3" {{ $user->character_class === 3 ? 'selected' : '' }}>Discoverer (+10% Research Speed)</option>
+                <label class="form-label">Select Class</label>
+                <select name="character_class" class="form-input" id="classSelect" onchange="showClassBonuses(this.value)">
+                    <option value="" {{ $user->character_class === null ? 'selected' : '' }}>None - No bonuses</option>
+                    <option value="1" {{ $user->character_class === 1 ? 'selected' : '' }}>Collector - Resource Production Focus</option>
+                    <option value="2" {{ $user->character_class === 2 ? 'selected' : '' }}>General - Military & Fleet Focus</option>
+                    <option value="3" {{ $user->character_class === 3 ? 'selected' : '' }}>Discoverer - Research & Exploration Focus</option>
                 </select>
             </div>
             
             <div class="form-group">
-                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.75rem;">
                     <input type="checkbox" name="reset_class_free_use" value="1" style="width: 20px; height: 20px; cursor: pointer;">
-                    <span class="form-label" style="margin: 0;">Allow Free Class Change</span>
+                    <div>
+                        <div class="form-label" style="margin: 0;">Allow Free Class Change</div>
+                        <div class="form-help" style="margin: 0;">Resets the free class selection flag (normally costs 500k DM)</div>
+                    </div>
                 </label>
-                <div class="form-help">Resets the free class selection flag</div>
             </div>
             
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
                 Update Character Class
             </button>
         </form>
+    </div>
+    
+    <!-- Class Bonuses Info -->
+    <div class="card" id="collectorBonuses" style="display: {{ $user->character_class === 1 ? 'block' : 'none' }};">
+        <div class="card-header" style="background: linear-gradient(135deg, #10b981, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Collector Bonuses</div>
+        <div style="display: grid; gap: 1rem;">
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">⛏️ Mine Production +25%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Metal, Crystal, and Deuterium mines produce 25% more resources</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">⚡ Energy Production +10%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Solar plants and fusion reactors produce 10% more energy</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">🚚 Transporter Speed +100%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Small and Large Cargo ships fly twice as fast</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">📦 Transporter Cargo +25%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Cargo ships can carry 25% more resources</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">🤖 Crawler Bonus +50%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Crawlers provide 50% more production bonus</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">📈 Max Crawler Overload 150%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can set crawler production up to 150% instead of 100%</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">💎 Building Speedup -10% DM Cost</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Dark matter speedups for buildings cost 10% less</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--success);">🎁 Exclusive Ship: Crawler</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can build Crawler units for production bonuses</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" id="generalBonuses" style="display: {{ $user->character_class === 2 ? 'block' : 'none' }};">
+        <div class="card-header" style="background: linear-gradient(135deg, #ef4444, #f87171); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">General Bonuses</div>
+        <div style="display: grid; gap: 1rem;">
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">⚔️ Combat Ship Speed +100%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">All military ships fly twice as fast</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">♻️ Recycler Speed +100%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Recyclers fly twice as fast for debris collection</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">⛽ Deuterium Consumption -50%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">All fleet missions use 50% less deuterium fuel</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">📦 Recycler/Pathfinder Cargo +20%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Recyclers and Pathfinders carry 20% more cargo</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">🔬 Combat Research +2 Levels</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Weapons, Shielding, and Armor count as 2 levels higher in combat</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">🚀 Fleet Slots +2</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can have 2 additional fleet missions active</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">🌙 Moon Fields +5</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">All moons have 5 additional building fields</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">💎 Shipyard Speedup -10% DM Cost</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Dark matter speedups for ships cost 10% less</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--danger);">🎁 Exclusive Ship: Reaper</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can build Reaper ships that auto-collect 30% of debris after attacks</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" id="discovererBonuses" style="display: {{ $user->character_class === 3 ? 'block' : 'none' }};">
+        <div class="card-header" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Discoverer Bonuses</div>
+        <div style="display: grid; gap: 1rem;">
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">🔬 Research Time -25%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">All research completes 25% faster</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">🚀 Expedition Slots +2</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can send 2 additional expeditions simultaneously</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">💰 Expedition Resources +50%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Expeditions find 50% more resources</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">👾 Expedition Enemies -50%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">50% less chance of encountering pirates or aliens</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">🌍 Planet Size +10%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">New colonies have 10% more building fields</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">📡 Phalanx Range +20%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Sensor phalanx can scan 20% further</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">🎯 Inactive Loot 75%</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can loot 75% from inactive players (vs 50% default)</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">👁️ Expedition Debris Visible</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can see debris fields at expedition positions</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">💎 Research Speedup -10% DM Cost</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Dark matter speedups for research cost 10% less</div>
+            </div>
+            <div style="padding: 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem;">
+                <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--secondary);">🎁 Exclusive Ship: Pathfinder</div>
+                <div style="color: var(--text-secondary); font-size: 0.875rem;">Can build Pathfinder ships for enhanced exploration</div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Resources Tab -->
 <div class="tab-content" id="resources-tab" style="display: none;">
-    <div class="card">
-        <div class="card-header">Dark Matter Management</div>
-        
-        <div style="background: var(--bg-tertiary); border-radius: 1rem; padding: 1.5rem; margin-bottom: 2rem;">
-            <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Current Balance</div>
-            <div style="font-size: 3rem; font-weight: 800; font-family: 'Orbitron', sans-serif; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                {{ number_format($user->dark_matter) }}
+    <!-- Dark Matter Section -->
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+        <div class="card" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1)); border: 2px solid rgba(59, 130, 246, 0.3);">
+            <div style="text-align: center;">
+                <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Dark Matter Balance</div>
+                <div id="dmBalance" style="font-size: 3.5rem; font-weight: 900; font-family: 'Orbitron', sans-serif; background: linear-gradient(135deg, #60a5fa, #a78bfa, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem;">
+                    {{ number_format($user->dark_matter) }}
+                </div>
+                <div style="color: var(--text-muted); font-size: 0.8125rem;">Available for use</div>
             </div>
         </div>
         
-        <form id="darkMatterForm" onsubmit="updateUser(event, 'dark_matter')">
-            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+        <div class="card">
+            <div class="card-header">Add/Subtract Dark Matter</div>
+            
+            <form id="darkMatterForm" onsubmit="updateDarkMatter(event)">
                 <div class="form-group">
                     <label class="form-label">Amount</label>
-                    <input type="number" name="dm_amount" class="form-input" value="1000" step="100">
-                    <div class="form-help">Use negative values to subtract</div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button type="button" class="btn btn-secondary" onclick="setDMAmount(-10000)" style="flex: 1;">-10k</button>
+                        <button type="button" class="btn btn-secondary" onclick="setDMAmount(-1000)" style="flex: 1;">-1k</button>
+                        <button type="button" class="btn btn-secondary" onclick="setDMAmount(1000)" style="flex: 1;">+1k</button>
+                        <button type="button" class="btn btn-secondary" onclick="setDMAmount(10000)" style="flex: 1;">+10k</button>
+                    </div>
+                    <input type="number" name="dm_amount" id="dmAmountInput" class="form-input" value="1000" step="100" style="margin-top: 0.75rem;">
+                    <div class="form-help">Use negative values to subtract, positive to add</div>
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Transaction Description</label>
                     <input type="text" name="dm_description" class="form-input" value="Admin adjustment" maxlength="255">
                 </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Apply Transaction
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Transaction History -->
+    <div class="card">
+        <div class="card-header">Transaction History (Last 20)</div>
+        
+        @if($dmTransactions->count() > 0)
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Balance After</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionHistory">
+                        @foreach($dmTransactions as $transaction)
+                        <tr>
+                            <td style="color: var(--text-secondary); font-size: 0.875rem;">
+                                {{ $transaction->created_at->format('M d, Y H:i') }}
+                            </td>
+                            <td>
+                                <span class="badge {{ $transaction->amount > 0 ? 'badge-success' : 'badge-danger' }}">
+                                    {{ $transaction->type }}
+                                </span>
+                            </td>
+                            <td style="font-family: monospace; font-weight: 600; color: {{ $transaction->amount > 0 ? 'var(--success)' : 'var(--danger)' }};">
+                                {{ $transaction->amount > 0 ? '+' : '' }}{{ number_format($transaction->amount) }}
+                            </td>
+                            <td style="color: var(--text-secondary);">{{ $transaction->description }}</td>
+                            <td style="font-family: monospace; font-weight: 600; color: var(--primary);">
+                                {{ number_format($transaction->balance_after) }}
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-            
-            <button type="submit" class="btn btn-primary">
-                Apply Transaction
-            </button>
-        </form>
+        @else
+            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+                No transactions yet
+            </div>
+        @endif
+    </div>
+    
+    <!-- Planet Resources -->
+    <div class="card">
+        <div class="card-header">Planet Resources Management</div>
+        
+        @if($planets->count() > 0)
+            <div style="display: grid; gap: 1.5rem;">
+                @foreach($planets as $planet)
+                    <div style="background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-elevated)); border: 2px solid var(--border); border-radius: 1.25rem; padding: 2rem; transition: all 0.3s;" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+                        <!-- Planet Header -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+                            <div>
+                                <h4 style="font-weight: 700; font-size: 1.25rem; margin-bottom: 0.5rem;">{{ $planet->name }}</h4>
+                                <div style="display: flex; gap: 1rem; align-items: center;">
+                                    <span style="font-family: monospace; color: var(--primary); font-weight: 600;">{{ $planet->galaxy }}:{{ $planet->system }}:{{ $planet->planet }}</span>
+                                    <span class="badge {{ $planet->planet_type == 1 ? 'badge-primary' : 'badge-secondary' }}">
+                                        {{ $planet->planet_type == 1 ? 'Planet' : 'Moon' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Resources Display -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.5rem;">
+                            <div style="background: rgba(107, 114, 128, 0.15); border: 1px solid rgba(107, 114, 128, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                                <div style="color: #9ca3af; font-size: 0.8125rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Metal</div>
+                                <div class="planet-{{ $planet->id }}-metal" style="font-size: 1.75rem; font-weight: 700; font-family: monospace; color: #d1d5db;">{{ number_format($planet->metal) }}</div>
+                            </div>
+                            <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                                <div style="color: #60a5fa; font-size: 0.8125rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Crystal</div>
+                                <div class="planet-{{ $planet->id }}-crystal" style="font-size: 1.75rem; font-weight: 700; font-family: monospace; color: #60a5fa;">{{ number_format($planet->crystal) }}</div>
+                            </div>
+                            <div style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                                <div style="color: #a78bfa; font-size: 0.8125rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Deuterium</div>
+                                <div class="planet-{{ $planet->id }}-deuterium" style="font-size: 1.75rem; font-weight: 700; font-family: monospace; color: #a78bfa;">{{ number_format($planet->deuterium) }}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Add Resources Form -->
+                        <form onsubmit="updatePlanetResources(event, {{ $planet->id }}, {{ $planet->galaxy }}, {{ $planet->system }}, {{ $planet->planet }})">
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem;">
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label">Add Metal</label>
+                                    <input type="number" name="metal" class="form-input" value="0" step="10000" placeholder="0">
+                                </div>
+                                
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label">Add Crystal</label>
+                                    <input type="number" name="crystal" class="form-input" value="0" step="10000" placeholder="0">
+                                </div>
+                                
+                                <div class="form-group" style="margin: 0;">
+                                    <label class="form-label">Add Deuterium</label>
+                                    <input type="number" name="deuterium" class="form-input" value="0" step="5000" placeholder="0">
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.75rem;">
+                                <button type="button" class="btn btn-secondary" onclick="setPlanetResources(this.form, 1000000, 1000000, 500000)" style="flex: 1;">+1M / 1M / 500k</button>
+                                <button type="button" class="btn btn-secondary" onclick="setPlanetResources(this.form, 10000000, 10000000, 5000000)" style="flex: 1;">+10M / 10M / 5M</button>
+                                <button type="submit" class="btn btn-primary" style="flex: 2;">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    Add to {{ $planet->name }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity: 0.3;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p style="font-size: 1.125rem; font-weight: 500;">No planets</p>
+            </div>
+        @endif
     </div>
 </div>
 
 <!-- Planets Tab -->
 <div class="tab-content" id="planets-tab" style="display: none;">
-    <div class="card">
-        <div class="card-header">Planets ({{ $planets->count() }})</div>
-        
-        @if($planets->count() > 0)
-            <div style="display: grid; gap: 1.25rem;">
-                @foreach($planets as $planet)
-                    <div style="background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; transition: all 0.2s;" onmouseover="this.style.borderColor='rgba(59, 130, 246, 0.4)'" onmouseout="this.style.borderColor='var(--border)'">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div>
-                                <h3 style="font-weight: 700; font-size: 1.125rem; margin-bottom: 0.75rem;">{{ $planet->name }}</h3>
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
-                                    <div>
-                                        <div style="color: var(--text-muted); font-size: 0.8125rem;">Coordinates</div>
-                                        <div style="font-family: monospace; color: var(--primary); font-weight: 600;">{{ $planet->galaxy }}:{{ $planet->system }}:{{ $planet->planet }}</div>
-                                    </div>
-                                    <div>
-                                        <div style="color: var(--text-muted); font-size: 0.8125rem;">Type</div>
-                                        <div style="font-weight: 500;">
-                                            @if($planet->planet_type == 1)
-                                                <span class="badge badge-primary">Planet</span>
-                                            @else
-                                                <span class="badge badge-secondary">Moon</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div style="color: var(--text-muted); font-size: 0.8125rem;">Fields</div>
-                                        <div style="font-weight: 500;">{{ $planet->field_current }}/{{ $planet->field_max }}</div>
-                                    </div>
-                                </div>
+    @if($planets->count() > 0)
+        @foreach($planets as $planet)
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <!-- Planet Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 2px solid var(--border);">
+                    <div>
+                        <h3 style="font-weight: 700; font-size: 1.5rem; margin-bottom: 0.75rem;">{{ $planet->name }}</h3>
+                        <div style="display: flex; gap: 1.25rem; align-items: center;">
+                            <span style="font-family: monospace; color: var(--primary); font-weight: 700; font-size: 1.125rem;">[{{ $planet->galaxy }}:{{ $planet->system }}:{{ $planet->planet }}]</span>
+                            <span class="badge {{ $planet->planet_type == 1 ? 'badge-primary' : 'badge-secondary' }}" style="font-size: 0.875rem;">
+                                {{ $planet->planet_type == 1 ? 'Planet' : 'Moon' }}
+                            </span>
+                            <span class="badge badge-primary" style="font-size: 0.875rem;">Diameter: {{ number_format($planet->diameter) }} km</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 0.5rem;">Building Fields</div>
+                        <div style="font-size: 1.75rem; font-weight: 700; color: var(--primary);">{{ $planet->field_current }}/{{ $planet->field_max }}</div>
+                    </div>
+                </div>
+                
+                <!-- Resources Overview -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 1.5rem;">
+                    <div style="background: rgba(107, 114, 128, 0.15); border: 1px solid rgba(107, 114, 128, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                        <div style="color: #9ca3af; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Metal</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; font-family: monospace; color: #d1d5db;">{{ number_format($planet->metal) }}</div>
+                    </div>
+                    <div style="background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                        <div style="color: #60a5fa; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Crystal</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; font-family: monospace; color: #60a5fa;">{{ number_format($planet->crystal) }}</div>
+                    </div>
+                    <div style="background: rgba(139, 92, 246, 0.15); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                        <div style="color: #a78bfa; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Deuterium</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; font-family: monospace; color: #a78bfa;">{{ number_format($planet->deuterium) }}</div>
+                    </div>
+                    <div style="background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.75rem; padding: 1.25rem; text-align: center;">
+                        <div style="color: #fbbf24; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Energy</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; font-family: monospace; color: {{ $planet->energy_max >= $planet->energy_used ? '#34d399' : '#f87171' }};">{{ number_format($planet->energy_max - $planet->energy_used) }}</div>
+                    </div>
+                </div>
+                
+                <!-- Planet Details -->
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem;">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Environment</div>
+                        <div style="display: grid; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+                                <span style="color: var(--text-muted);">Temperature</span>
+                                <span style="font-weight: 600;">{{ $planet->temp_min }}°C to {{ $planet->temp_max }}°C</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+                                <span style="color: var(--text-muted);">Diameter</span>
+                                <span style="font-weight: 600;">{{ number_format($planet->diameter) }} km</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+                                <span style="color: var(--text-muted);">Last Updated</span>
+                                <span style="font-weight: 600;">{{ \Carbon\Carbon::createFromTimestamp($planet->time_last_update)->diffForHumans() }}</span>
                             </div>
                         </div>
                     </div>
-                @endforeach
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Production</div>
+                        <div style="display: grid; gap: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+                                <span style="color: var(--text-muted);">Metal/Hour</span>
+                                <span style="font-weight: 600; color: #9ca3af;">+{{ number_format($planet->metal_production) }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+                                <span style="color: var(--text-muted);">Crystal/Hour</span>
+                                <span style="font-weight: 600; color: #60a5fa;">+{{ number_format($planet->crystal_production) }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 0.75rem; background: var(--bg-tertiary); border-radius: 0.5rem;">
+                                <span style="color: var(--text-muted);">Deuterium/Hour</span>
+                                <span style="font-weight: 600; color: #a78bfa;">+{{ number_format($planet->deuterium_production) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        @else
-            <div style="padding: 2rem; text-align: center; color: var(--text-muted);">No planets</div>
-        @endif
-    </div>
+        @endforeach
+    @else
+        <div class="card">
+            <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+                <svg width="80" height="80" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin: 0 auto 1.5rem; opacity: 0.3;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p style="font-size: 1.125rem; font-weight: 500;">No planets</p>
+            </div>
+        </div>
+    @endif
 </div>
 
 <!-- Danger Zone Tab -->
@@ -284,6 +625,98 @@
 
 @push('scripts')
 <script>
+function setDMAmount(amount) {
+    const input = document.getElementById('dmAmountInput');
+    if (input) {
+        input.value = amount;
+    }
+}
+
+function showClassBonuses(classValue) {
+    // Hide all bonus cards
+    document.getElementById('collectorBonuses').style.display = 'none';
+    document.getElementById('generalBonuses').style.display = 'none';
+    document.getElementById('discovererBonuses').style.display = 'none';
+    
+    // Show selected class bonuses
+    if (classValue === '1') {
+        document.getElementById('collectorBonuses').style.display = 'block';
+    } else if (classValue === '2') {
+        document.getElementById('generalBonuses').style.display = 'block';
+    } else if (classValue === '3') {
+        document.getElementById('discovererBonuses').style.display = 'block';
+    }
+}
+
+async function updateDarkMatter(event) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    formData.append('action', 'add_dark_matter');
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+    
+    try {
+        const response = await fetch('{{ route('admin.users.update', $user->id) }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            Toast.show(data.message || 'Dark matter updated successfully', 'success');
+            
+            // Update balance display
+            const balanceDisplay = document.getElementById('dmBalance');
+            if (balanceDisplay && data.new_balance !== undefined) {
+                balanceDisplay.textContent = data.new_balance.toLocaleString();
+            }
+            
+            // Add new transaction to history
+            const historyTable = document.getElementById('transactionHistory');
+            if (historyTable && data.amount) {
+                const now = new Date();
+                const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                const description = formData.get('dm_description');
+                const badgeClass = data.amount > 0 ? 'badge-success' : 'badge-danger';
+                const amountColor = data.amount > 0 ? 'var(--success)' : 'var(--danger)';
+                
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td style="color: var(--text-secondary); font-size: 0.875rem;">${dateStr}</td>
+                    <td><span class="badge ${badgeClass}">admin_adjustment</span></td>
+                    <td style="font-family: monospace; font-weight: 600; color: ${amountColor};">${data.amount > 0 ? '+' : ''}${data.amount.toLocaleString()}</td>
+                    <td style="color: var(--text-secondary);">${description}</td>
+                    <td style="font-family: monospace; font-weight: 600; color: var(--primary);">${data.new_balance.toLocaleString()}</td>
+                `;
+                historyTable.insertBefore(newRow, historyTable.firstChild);
+            }
+            
+            // Reset form
+            form.querySelector('input[name="dm_amount"]').value = '1000';
+            form.querySelector('input[name="dm_description"]').value = 'Admin adjustment';
+        } else {
+            throw new Error(data.message || 'Update failed');
+        }
+    } catch (error) {
+        Toast.show(error.message || 'Failed to update dark matter', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+    }
+}
+
 async function updateUser(event, action) {
     event.preventDefault();
     
@@ -301,17 +734,132 @@ async function updateUser(event, action) {
     try {
         const response = await fetch('{{ route('admin.users.update', $user->id) }}', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         });
         
         if (response.ok) {
             Toast.show('User updated successfully', 'success');
-            setTimeout(() => window.location.reload(), 1500);
+            
+            // Update UI directly based on action
+            if (action === 'dark_matter') {
+                const dmAmount = parseInt(formData.get('dm_amount'));
+                const balanceDisplay = document.getElementById('dmBalance');
+                if (balanceDisplay) {
+                    const currentText = balanceDisplay.textContent.replace(/,/g, '');
+                    const currentBalance = parseInt(currentText) || {{ $user->dark_matter }};
+                    const newBalance = Math.max(0, currentBalance + dmAmount);
+                    balanceDisplay.textContent = newBalance.toLocaleString();
+                    
+                    // Add new transaction to history table
+                    const historyTable = document.getElementById('transactionHistory');
+                    if (historyTable) {
+                        const now = new Date();
+                        const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                        const description = formData.get('dm_description');
+                        const badgeClass = dmAmount > 0 ? 'badge-success' : 'badge-danger';
+                        const amountColor = dmAmount > 0 ? 'var(--success)' : 'var(--danger)';
+                        
+                        const newRow = `
+                            <tr>
+                                <td style="color: var(--text-secondary); font-size: 0.875rem;">${dateStr}</td>
+                                <td><span class="badge ${badgeClass}">admin_adjustment</span></td>
+                                <td style="font-family: monospace; font-weight: 600; color: ${amountColor};">${dmAmount > 0 ? '+' : ''}${dmAmount.toLocaleString()}</td>
+                                <td style="color: var(--text-secondary);">${description}</td>
+                                <td style="font-family: monospace; font-weight: 600; color: var(--primary);">${newBalance.toLocaleString()}</td>
+                            </tr>
+                        `;
+                        historyTable.insertAdjacentHTML('afterbegin', newRow);
+                    }
+                }
+                
+                // Reset form
+                form.querySelector('input[name="dm_amount"]').value = '1000';
+                form.querySelector('input[name="dm_description"]').value = 'Admin adjustment';
+            }
+            
+            // Don't reload page
         } else {
             throw new Error('Update failed');
         }
     } catch (error) {
         Toast.show('Failed to update user', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+    }
+}
+
+function setPlanetResources(form, metal, crystal, deuterium) {
+    form.querySelector('input[name="metal"]').value = metal;
+    form.querySelector('input[name="crystal"]').value = crystal;
+    form.querySelector('input[name="deuterium"]').value = deuterium;
+}
+
+async function updatePlanetResources(event, planetId, galaxy, system, position) {
+    event.preventDefault();
+    
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    
+    formData.append('galaxy', galaxy);
+    formData.append('system', system);
+    formData.append('position', position);
+    formData.append('update_resources_planet', '1');
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Adding...';
+    
+    try {
+        const response = await fetch('/admin/developer-tools/resources', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        if (response.ok) {
+            Toast.show('Resources added successfully', 'success');
+            
+            // Get amounts from form
+            const metal = parseInt(formData.get('metal')) || 0;
+            const crystal = parseInt(formData.get('crystal')) || 0;
+            const deuterium = parseInt(formData.get('deuterium')) || 0;
+            
+            // Update resource displays
+            const metalDisplay = document.querySelector(`.planet-${planetId}-metal`);
+            const crystalDisplay = document.querySelector(`.planet-${planetId}-crystal`);
+            const deuteriumDisplay = document.querySelector(`.planet-${planetId}-deuterium`);
+            
+            if (metalDisplay) {
+                const current = parseInt(metalDisplay.textContent.replace(/,/g, ''));
+                metalDisplay.textContent = (current + metal).toLocaleString();
+            }
+            if (crystalDisplay) {
+                const current = parseInt(crystalDisplay.textContent.replace(/,/g, ''));
+                crystalDisplay.textContent = (current + crystal).toLocaleString();
+            }
+            if (deuteriumDisplay) {
+                const current = parseInt(deuteriumDisplay.textContent.replace(/,/g, ''));
+                deuteriumDisplay.textContent = (current + deuterium).toLocaleString();
+            }
+            
+            // Reset form inputs
+            form.querySelectorAll('input[type="number"]').forEach(input => {
+                input.value = '0';
+            });
+        } else {
+            throw new Error('Update failed');
+        }
+    } catch (error) {
+        Toast.show('Failed to update resources', 'error');
+    } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalHTML;
     }

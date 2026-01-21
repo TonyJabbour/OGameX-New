@@ -23,7 +23,7 @@
     <a href="#advanced" class="tab" data-tab="advanced">Advanced</a>
 </div>
 
-<form action="{{ route('admin.serversettings.update') }}" method="POST">
+<form id="settingsForm" action="{{ route('admin.serversettings.update') }}" method="POST" onsubmit="saveSettings(event)">
     @csrf
     
     <!-- Universe Tab -->
@@ -420,29 +420,40 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content');
+async function saveSettings(event) {
+    event.preventDefault();
     
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Remove active class from all tabs
-            tabs.forEach(t => t.classList.remove('active'));
-            
-            // Hide all tab contents
-            tabContents.forEach(tc => tc.style.display = 'none');
-            
-            // Add active class to clicked tab
-            this.classList.add('active');
-            
-            // Show corresponding tab content
-            const tabId = this.getAttribute('data-tab') + '-tab';
-            document.getElementById(tabId).style.display = 'block';
+    const form = event.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Saving...';
+    
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         });
-    });
-});
+        
+        if (response.ok) {
+            Toast.show('Settings saved successfully', 'success');
+            // Don't reload - just show success
+        } else {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to save settings');
+        }
+    } catch (error) {
+        Toast.show(error.message || 'Failed to save settings', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+    }
+}
 </script>
 @endpush
 @endsection

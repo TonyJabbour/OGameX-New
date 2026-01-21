@@ -72,10 +72,15 @@ class UserManagementController extends OGameController
     {
         $user = User::findOrFail($id);
         $planets = Planet::where('user_id', $id)->get();
+        $dmTransactions = \OGame\Models\DarkMatterTransaction::where('user_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(20)
+            ->get();
         
         return view('admin.users.show-modern')->with([
             'user' => $user,
             'planets' => $planets,
+            'dmTransactions' => $dmTransactions,
         ]);
     }
 
@@ -86,10 +91,11 @@ class UserManagementController extends OGameController
      * @param int $id
      * @return RedirectResponse
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, int $id)
     {
         $user = User::findOrFail($id);
         $action = $request->input('action', 'update_account');
+        $isAjax = $request->ajax() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest';
         
         switch ($action) {
             case 'update_roles':
@@ -100,6 +106,10 @@ class UserManagementController extends OGameController
                 }
                 if ($request->has('role_moderator')) {
                     $user->assignRole('moderator');
+                }
+                
+                if ($isAjax) {
+                    return response()->json(['success' => true, 'message' => 'Roles updated successfully']);
                 }
                 return redirect()->back()->with('success', 'Roles updated successfully');
                 
@@ -114,6 +124,10 @@ class UserManagementController extends OGameController
                 }
                 
                 $user->save();
+                
+                if ($isAjax) {
+                    return response()->json(['success' => true, 'message' => 'Character class updated successfully']);
+                }
                 return redirect()->back()->with('success', 'Character class updated successfully');
                 
             case 'add_dark_matter':
@@ -135,6 +149,14 @@ class UserManagementController extends OGameController
                     'created_at' => now(),
                 ]);
                 
+                if ($isAjax) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => "Dark matter updated: {$oldBalance} → {$user->dark_matter}",
+                        'new_balance' => $user->dark_matter,
+                        'amount' => $amount
+                    ]);
+                }
                 return redirect()->back()->with('success', "Dark matter updated: {$oldBalance} → {$user->dark_matter}");
                 
             default:

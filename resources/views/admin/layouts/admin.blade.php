@@ -6,11 +6,20 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Admin Panel') - {{ config('app.name', 'OGameX') }}</title>
     
+    <!-- DNS Prefetch & Preconnect for faster resource loading -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet">
-    <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
     
+    <!-- Preload critical CSS for faster header render -->
+    <link rel="preload" href="{{ asset('css/admin.css') }}" as="style">
+    
+    <!-- Load fonts with font-display=swap to prevent render blocking -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet"></noscript>
+    
+    <!-- Critical CSS loaded normally -->
+    <link href="{{ asset('css/admin.css') }}" rel="stylesheet">
     
     @stack('styles')
 </head>
@@ -91,7 +100,7 @@
         </main>
     </div>
     
-    <script src="{{ asset('js/admin.js') }}"></script>
+    <script src="{{ asset('js/admin.js') }}" defer></script>
     @stack('scripts')
 </body>
 </html>

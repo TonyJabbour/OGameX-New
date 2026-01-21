@@ -28,7 +28,7 @@
         <div class="card-header">Current Planet Tools</div>
         <p style="color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.875rem;">Current Planet: <strong>{{ $currentPlanet->getPlanetName() }}</strong> ({{ $currentPlanet->getPlanetCoordinates()->asString() }})</p>
         
-        <form action="{{ route('admin.developershortcuts.update-resources') }}" method="POST">
+        <form id="addResourcesForm" action="{{ route('admin.developershortcuts.update-resources') }}" method="POST" onsubmit="submitDevForm(event, this)">
             @csrf
             <input type="hidden" name="galaxy" value="{{ $currentPlanet->getPlanetCoordinates()->galaxy }}">
             <input type="hidden" name="system" value="{{ $currentPlanet->getPlanetCoordinates()->system }}">
@@ -59,7 +59,7 @@
     <div class="card">
         <div class="card-header">Set Building Level</div>
         
-        <form action="{{ route('admin.developershortcuts.update') }}" method="POST">
+        <form action="{{ route('admin.developershortcuts.update') }}" method="POST" onsubmit="submitDevForm(event, this)">
             @csrf
             <input type="hidden" name="action" value="set_building">
             
@@ -92,7 +92,7 @@
     <div class="card">
         <div class="card-header">Set Research Level</div>
         
-        <form action="{{ route('admin.developershortcuts.update') }}" method="POST">
+        <form action="{{ route('admin.developershortcuts.update') }}" method="POST" onsubmit="submitDevForm(event, this)">
             @csrf
             <input type="hidden" name="action" value="set_research">
             
@@ -134,7 +134,7 @@
     <div class="card">
         <div class="card-header">Add/Subtract Resources at Coordinates</div>
         
-        <form action="{{ route('admin.developershortcuts.update-resources') }}" method="POST">
+        <form action="{{ route('admin.developershortcuts.update-resources') }}" method="POST" onsubmit="submitDevForm(event, this)">
             @csrf
             <input type="hidden" name="use_coordinates" value="1">
             
@@ -183,7 +183,7 @@
     <div class="card">
         <div class="card-header">Create Planet at Coordinates</div>
         
-        <form action="{{ route('admin.developershortcuts.create-at-coords') }}" method="POST">
+        <form action="{{ route('admin.developershortcuts.create-at-coords') }}" method="POST" onsubmit="submitDevForm(event, this)">
             @csrf
             <input type="hidden" name="type" value="planet">
             
@@ -216,7 +216,7 @@
     <div class="card">
         <div class="card-header">Create Debris Field</div>
         
-        <form action="{{ route('admin.developershortcuts.create-debris') }}" method="POST">
+        <form action="{{ route('admin.developershortcuts.create-debris') }}" method="POST" onsubmit="submitDevForm(event, this)">
             @csrf
             
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
@@ -276,41 +276,67 @@
 
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const tabs = document.querySelectorAll('.tab');
-    const tabContents = document.querySelectorAll('.tab-content');
+async function submitDevForm(event, form) {
+    event.preventDefault();
     
-    tabs.forEach(tab => {
-        tab.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            tabs.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(tc => tc.style.display = 'none');
-            
-            this.classList.add('active');
-            const tabId = this.getAttribute('data-tab') + '-tab';
-            document.getElementById(tabId).style.display = 'block';
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalHTML = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
+    
+    try {
+        const response = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         });
-    });
-});
+        
+        if (response.ok) {
+            Toast.show('Operation completed successfully', 'success');
+            // Reset form if it's a resource form
+            if (form.id === 'addResourcesForm') {
+                form.querySelectorAll('input[type="number"]').forEach(input => {
+                    if (input.name !== 'galaxy' && input.name !== 'system' && input.name !== 'position') {
+                        input.value = '0';
+                    }
+                });
+            }
+        } else {
+            throw new Error('Operation failed');
+        }
+    } catch (error) {
+        Toast.show('Operation failed. Please try again.', 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHTML;
+    }
+}
 
-function clearCache(type) {
-    if (confirm(`Clear ${type} cache?`)) {
-        fetch('/admin/developer-tools/clear-cache', {
+async function clearCache(type) {
+    try {
+        const response = await fetch('/admin/developer-tools/clear-cache', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             },
             body: JSON.stringify({ type })
-        })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message || 'Cache cleared successfully');
-        })
-        .catch(error => {
-            alert('Error clearing cache');
         });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            Toast.show(data.message || 'Cache cleared successfully', 'success');
+        } else {
+            throw new Error(data.error || 'Failed to clear cache');
+        }
+    } catch (error) {
+        Toast.show(error.message || 'Error clearing cache', 'error');
     }
 }
 </script>
