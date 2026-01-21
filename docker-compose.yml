@@ -95,6 +95,7 @@ services:
     tty: true
     volumes:
       - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       CONTAINER_ROLE: scheduler
       DB_HOST: ogamex-mariadb
@@ -123,6 +124,7 @@ services:
     tty: true
     volumes:
       - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
     environment:
       CONTAINER_ROLE: queue
       DB_HOST: ogamex-mariadb
