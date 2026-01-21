@@ -994,17 +994,26 @@ async function deleteUser(id, username) {
         
         const response = await fetch(`/admin/users/${id}/delete`, {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         });
         
-        if (response.ok) {
+        console.log('Delete response status:', response.status);
+        
+        if (response.ok || response.redirected) {
             Toast.show('User deleted successfully', 'success');
-            setTimeout(() => window.location.href = '{{ route('admin.users.index') }}', 1500);
+            // Force redirect to user list
+            window.location.href = '{{ route('admin.users.index') }}';
         } else {
-            throw new Error('Delete failed');
+            const text = await response.text();
+            console.error('Delete failed:', text);
+            throw new Error('Delete failed with status: ' + response.status);
         }
     } catch (error) {
-        Toast.show('Failed to delete user', 'error');
+        console.error('Delete error:', error);
+        Toast.show('Failed to delete user: ' + error.message, 'error');
     }
 }
 </script>

@@ -21,23 +21,26 @@ class ImageManagementController extends OGameController
     {
         $category = $request->input('category', 'all');
         
-        // Define image categories based on game content
-        $categories = [
-            'planets' => 'Planets',
-            'ships' => 'Ships',
-            'buildings' => 'Buildings',
-            'research' => 'Research',
-            'defense' => 'Defense',
-            'screenshots' => 'Screenshots',
-            'ui' => 'UI Elements',
-            'backgrounds' => 'Backgrounds',
-        ];
-        
-        // Scan public/img directory
-        $images = [];
+        // Scan public/img directory to find all subdirectories
         $basePath = public_path('img');
+        $categories = [];
+        
+        if (is_dir($basePath)) {
+            $dirs = glob($basePath . '/*', GLOB_ONLYDIR);
+            foreach ($dirs as $dir) {
+                $dirName = basename($dir);
+                $categories[$dirName] = ucfirst(str_replace(['_', '-'], ' ', $dirName));
+            }
+        }
+        
+        // Sort categories alphabetically
+        asort($categories);
+        
+        // Scan for images
+        $images = [];
         
         if ($category === 'all') {
+            // Scan all subdirectories
             foreach ($categories as $cat => $label) {
                 $categoryPath = $basePath . '/' . $cat;
                 if (is_dir($categoryPath)) {
@@ -54,6 +57,7 @@ class ImageManagementController extends OGameController
                 }
             }
         } else {
+            // Scan specific category
             $categoryPath = $basePath . '/' . $category;
             if (is_dir($categoryPath)) {
                 $files = glob($categoryPath . '/*.{jpg,jpeg,png,gif,webp,svg}', GLOB_BRACE);
@@ -69,11 +73,74 @@ class ImageManagementController extends OGameController
             }
         }
         
+        // Sort images by modified date (newest first)
+        usort($images, function($a, $b) {
+            return $b['modified'] - $a['modified'];
+        });
+        
+        // Scan codebase for image usage
+        $imageUsage = $this->scanImageUsage();
+        
+        // Add usage count to each image
+        foreach ($images as &$image) {
+            $imageName = $image['name'];
+            $image['usage_count'] = $imageUsage[$imageName] ?? 0;
+            $image['is_used'] = $image['usage_count'] > 0;
+        }
+        
         return view('admin.images.index')->with([
             'images' => $images,
             'categories' => $categories,
             'currentCategory' => $category,
         ]);
+    }
+    
+    /**
+     * Scan codebase for image usage.
+     * Returns array of image filenames and their usage count.
+     *
+     * @return array
+     */
+    private function scanImageUsage(): array
+    {
+        $usage = [];
+        $searchPaths = [
+            base_path('resources/views'),
+            base_path('public/css'),
+            base_path('public/js'),
+        ];
+        
+        foreach ($searchPaths as $path) {
+            if (!is_dir($path)) continue;
+            
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($path)
+            );
+            
+            foreach ($iterator as $file) {
+                if (!$file->isFile()) continue;
+                
+                $extension = $file->getExtension();
+                if (!in_array($extension, ['php', 'blade', 'css', 'js'])) continue;
+                
+                $content = file_get_contents($file->getPathname());
+                
+                // Search for image references
+                // Patterns: /img/..., asset('img/...), url('/img/...)
+                preg_match_all('/\/img\/[\w\/\-]+\/(\w+\.(?:jpg|jpeg|png|gif|webp|svg))/i', $content, $matches);
+                
+                if (!empty($matches[1])) {
+                    foreach ($matches[1] as $imageName) {
+                        if (!isset($usage[$imageName])) {
+                            $usage[$imageName] = 0;
+                        }
+                        $usage[$imageName]++;
+                    }
+                }
+            }
+        }
+        
+        return $usage;
     }
 
     /**

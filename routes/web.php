@@ -266,6 +266,8 @@ Route::middleware(['auth', 'globalgame', 'locale', 'admin'])->prefix('admin')->n
     Route::post('/users/{id}/delete', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'delete'])->name('users.delete');
     Route::post('/users/{id}/ban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'ban'])->name('users.ban');
     Route::post('/users/{id}/unban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'unban'])->name('users.unban');
+    Route::post('/users/{id}/ban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'ban'])->name('users.ban');
+    Route::post('/users/{id}/unban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'unban'])->name('users.unban');
     
     // Image Management
     Route::get('/images', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'index'])->name('images.index');

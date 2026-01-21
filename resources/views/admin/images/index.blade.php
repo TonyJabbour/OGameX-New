@@ -4,52 +4,18 @@
 
 @section('content')
 <div class="page-header">
-    <h1 class="page-title">Image Management</h1>
-    <p class="page-description">Upload and organize game content images</p>
-</div>
-
-<!-- Upload Section with Drag & Drop -->
-<div class="card" style="margin-bottom: 2rem;">
-    <div class="card-header">Upload Images</div>
-    
-    <form id="uploadForm" action="{{ route('admin.images.upload') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-        <div class="dropzone" onclick="document.getElementById('imageInput').click()">
-            <svg class="dropzone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-            </svg>
-            <div class="dropzone-text">Drop images here or click to browse</div>
-            <div class="dropzone-hint">Supports JPG, PNG, GIF, WebP, SVG (Max 5MB)</div>
-            <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;" multiple>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 class="page-title">Image Management</h1>
+            <p class="page-description">Upload and organize game content images</p>
         </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.5rem;">
-            <div class="form-group" style="margin: 0;">
-                <label class="form-label">Category</label>
-                <select name="category" class="form-input" required>
-                    @foreach($categories as $key => $label)
-                        <option value="{{ $key }}">{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            
-            <div class="form-group" style="margin: 0;">
-                <label class="form-label">Custom Name (Optional)</label>
-                <input type="text" name="custom_name" class="form-input" placeholder="Auto-generated from filename">
-            </div>
-        </div>
-        
-        <div id="imagePreviewContainer" style="display: none; margin-top: 1.5rem;">
-            <img id="imagePreview" style="max-width: 200px; max-height: 200px; border-radius: 0.75rem; border: 2px solid var(--border);">
-        </div>
-        
-        <button type="submit" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%;">
+        <button onclick="Modal.open('uploadModal')" class="btn btn-primary">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
             </svg>
-            Upload Image
+            Upload Images
         </button>
-    </form>
+    </div>
 </div>
 
 <!-- Category Filter -->
@@ -123,6 +89,62 @@
             <p style="font-size: 0.875rem; margin-top: 0.5rem;">Upload your first image to get started</p>
         </div>
     @endif
+</div>
+
+<!-- Upload Modal -->
+<div class="modal-overlay" id="uploadModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Upload Images</h3>
+            <button class="modal-close" onclick="Modal.close('uploadModal')">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <form id="uploadForm" action="{{ route('admin.images.upload') }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="dropzone" onclick="document.getElementById('imageInput').click()">
+                    <svg class="dropzone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                    </svg>
+                    <div class="dropzone-text">Drop images here or click to browse</div>
+                    <div class="dropzone-hint">Supports JPG, PNG, GIF, WebP, SVG (Max 5MB)</div>
+                    <input type="file" id="imageInput" name="image" accept="image/*" style="display: none;">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin-top: 1.5rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Category</label>
+                        <select name="category" class="form-input" required>
+                            @foreach($categories as $key => $label)
+                                <option value="{{ $key }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label">Custom Name (Optional)</label>
+                        <input type="text" name="custom_name" class="form-input" placeholder="Auto-generated from filename">
+                    </div>
+                </div>
+                
+                <div id="imagePreviewContainer" style="display: none; margin-top: 1.5rem; text-align: center;">
+                    <img id="imagePreview" style="max-width: 100%; max-height: 300px; border-radius: 0.75rem; border: 2px solid var(--border);">
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button onclick="Modal.close('uploadModal')" class="btn btn-secondary">Cancel</button>
+            <button onclick="document.getElementById('uploadForm').dispatchEvent(new Event('submit', {bubbles: true, cancelable: true}))" class="btn btn-primary">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                Upload Image
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Hidden Forms for Actions -->
@@ -238,11 +260,11 @@ document.getElementById('imageInput')?.addEventListener('change', function(e) {
 document.getElementById('uploadForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const submitBtn = this.querySelector('button[type="submit"]');
-    const originalHTML = submitBtn.innerHTML;
+    const modalFooterBtn = document.querySelector('#uploadModal .modal-footer .btn-primary');
+    const originalHTML = modalFooterBtn.innerHTML;
     
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner"></span> Uploading...';
+    modalFooterBtn.disabled = true;
+    modalFooterBtn.innerHTML = '<span class="spinner"></span> Uploading...';
     
     try {
         const formData = new FormData(this);
@@ -252,17 +274,21 @@ document.getElementById('uploadForm')?.addEventListener('submit', async function
         });
         
         if (response.ok) {
-            Toast.show('Image uploaded successfully. Refresh to see new image.', 'success');
-            // Reset form
+            Toast.show('Image uploaded successfully', 'success');
+            // Reset form and close modal
             this.reset();
             document.getElementById('imagePreviewContainer').style.display = 'none';
+            Modal.close('uploadModal');
+            // Reload page to show new image
+            setTimeout(() => window.location.reload(), 1000);
         } else {
             throw new Error('Upload failed');
         }
     } catch (error) {
         Toast.show('Failed to upload image', 'error');
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalHTML;
+    } finally {
+        modalFooterBtn.disabled = false;
+        modalFooterBtn.innerHTML = originalHTML;
     }
 });
 </script>
