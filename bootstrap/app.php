@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use OGame\Http\Middleware\Admin;
+use OGame\Http\Middleware\CheckBanned;
 use OGame\Http\Middleware\CheckFirstLogin;
 use OGame\Http\Middleware\GlobalGame;
 use OGame\Http\Middleware\Locale;
@@ -17,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->prepend(ServerTiming::class);
+        $middleware->web(append: [
+            CheckBanned::class,
+        ]);
         $middleware->alias([
             'globalgame' => GlobalGame::class,
             'locale' => Locale::class,

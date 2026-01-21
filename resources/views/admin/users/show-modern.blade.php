@@ -30,6 +30,9 @@
                 @if($user->hasRole('admin'))
                     <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1e293b; border: none;">ADMIN</span>
                 @endif
+                @if($user->is_banned)
+                    <span class="badge badge-danger">BANNED</span>
+                @endif
                 @if($user->vacation_mode)
                     <span class="badge badge-warning">ON VACATION</span>
                 @elseif($user->isOnline())
@@ -81,6 +84,7 @@
     <a href="#character" class="tab" data-tab="character">Character</a>
     <a href="#resources" class="tab" data-tab="resources">Resources</a>
     <a href="#planets" class="tab" data-tab="planets">Planets</a>
+    <a href="#moderation" class="tab" data-tab="moderation">Moderation</a>
     <a href="#danger" class="tab" data-tab="danger">Danger Zone</a>
 </div>
 
@@ -602,6 +606,114 @@
     @endif
 </div>
 
+<!-- Moderation Tab -->
+<div class="tab-content" id="moderation-tab" style="display: none;">
+    @if($user->is_banned)
+        <!-- Banned Status Card -->
+        <div class="card" style="border-color: rgba(239, 68, 68, 0.5); background: linear-gradient(135deg, var(--bg-secondary), rgba(239, 68, 68, 0.08));">
+            <div class="card-header" style="color: var(--danger); display: flex; align-items: center; gap: 0.75rem;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                </svg>
+                User is Currently Banned
+            </div>
+            
+            <div style="display: grid; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-radius: 0.75rem;">
+                    <div style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 0.25rem;">Ban Reason</div>
+                    <div style="font-weight: 500; color: var(--danger);">{{ $user->ban_reason ?? 'No reason provided' }}</div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.75rem;">
+                        <div style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 0.25rem;">Banned At</div>
+                        <div style="font-weight: 500;">{{ $user->banned_at ? $user->banned_at->format('M d, Y H:i') : 'N/A' }}</div>
+                    </div>
+                    
+                    <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.75rem;">
+                        <div style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 0.25rem;">Ban Expires</div>
+                        <div style="font-weight: 500;">{{ $user->banned_until ? $user->banned_until->format('M d, Y H:i') : 'Permanent' }}</div>
+                    </div>
+                </div>
+                
+                @if($user->banned_by_user_id)
+                    <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.75rem;">
+                        <div style="color: var(--text-muted); font-size: 0.8125rem; margin-bottom: 0.25rem;">Banned By</div>
+                        <div style="font-weight: 500;">Admin #{{ $user->banned_by_user_id }}</div>
+                    </div>
+                @endif
+            </div>
+            
+            <form action="{{ route('admin.users.unban', $user->id) }}" method="POST">
+                @csrf
+                <button type="submit" class="btn btn-success" style="width: 100%;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Unban User
+                </button>
+            </form>
+        </div>
+    @else
+        <!-- Ban User Card -->
+        <div class="card">
+            <div class="card-header" style="display: flex; align-items: center; gap: 0.75rem;">
+                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+                Ban User
+            </div>
+            
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Banning a user will prevent them from logging in and accessing the game. You can set a temporary ban with an expiration date or ban them permanently.
+            </p>
+            
+            <form action="{{ route('admin.users.ban', $user->id) }}" method="POST">
+                @csrf
+                
+                <div class="form-group">
+                    <label class="form-label">Ban Reason <span style="color: var(--danger);">*</span></label>
+                    <textarea name="ban_reason" class="form-input" rows="3" placeholder="Enter reason for ban (visible to other admins)" required style="resize: vertical;"></textarea>
+                    <div class="form-help">This will be visible to other administrators</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Ban Duration <span style="color: var(--danger);">*</span></label>
+                    <select name="ban_duration" class="form-input" required>
+                        <option value="">Select duration...</option>
+                        <option value="1day">1 Day</option>
+                        <option value="3days">3 Days</option>
+                        <option value="7days">7 Days (1 Week)</option>
+                        <option value="30days">30 Days (1 Month)</option>
+                        <option value="permanent">Permanent</option>
+                    </select>
+                </div>
+                
+                <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.75rem; margin-bottom: 1.5rem;">
+                    <div style="display: flex; gap: 0.75rem;">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink: 0; color: var(--danger);">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <div>
+                            <div style="font-weight: 600; color: var(--danger); margin-bottom: 0.25rem;">Warning</div>
+                            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                                The user will be immediately logged out and unable to access their account until the ban is lifted.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-danger" style="width: 100%;">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                    </svg>
+                    Ban User
+                </button>
+            </form>
+        </div>
+    @endif
+</div>
+
 <!-- Danger Zone Tab -->
 <div class="tab-content" id="danger-tab" style="display: none;">
     <div class="card" style="border-color: rgba(239, 68, 68, 0.3); background: linear-gradient(135deg, var(--bg-secondary), rgba(239, 68, 68, 0.05));">
@@ -612,7 +724,9 @@
             Danger Zone
         </div>
         
-        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Permanently delete this user and all their planets. This action cannot be undone.</p>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Permanently delete this user and <strong>all related data</strong> including: planets, fleet missions, messages, notes, alliance memberships, battle reports, resources, technologies, and more. This action cannot be undone.
+        </p>
         
         <button onclick="deleteUser({{ $user->id }}, '{{ $user->username }}')" class="btn btn-danger" style="width: 100%;">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -866,7 +980,7 @@ async function updatePlanetResources(event, planetId, galaxy, system, position) 
 }
 
 async function deleteUser(id, username) {
-    if (!confirm(`Delete user "${username}"? This will also delete all their planets. This cannot be undone!`)) return;
+    if (!confirm(`Delete user "${username}"? This will permanently delete ALL related data including planets, fleets, messages, alliances, and more. This cannot be undone!`)) return;
     
     const secondConfirm = prompt(`Type "${username}" to confirm deletion:`);
     if (secondConfirm !== username) {

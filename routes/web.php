@@ -54,6 +54,14 @@ Route::get('/', [LandingController::class, 'index'])->name('landing');
 // Unified authentication route
 Route::get('/auth', [LandingController::class, 'unified'])->name('auth.unified');
 
+// Banned user page
+Route::get('/banned', function () {
+    if (!auth()->check() || !auth()->user()->isBanned()) {
+        return redirect('/');
+    }
+    return view('auth.banned');
+})->middleware('auth')->name('banned');
+
 // API routes for authentication checks (without CSRF middleware)
 Route::prefix('api/auth')->middleware('throttle:60,1')->group(function () {
     Route::post('/check-email', [AuthCheckController::class, 'checkEmail'])->name('api.auth.check-email');
@@ -256,6 +264,8 @@ Route::middleware(['auth', 'globalgame', 'locale', 'admin'])->prefix('admin')->n
     Route::get('/users/{id}', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'show'])->name('users.show');
     Route::post('/users/{id}/update', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'update'])->name('users.update');
     Route::post('/users/{id}/delete', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'delete'])->name('users.delete');
+    Route::post('/users/{id}/ban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'ban'])->name('users.ban');
+    Route::post('/users/{id}/unban', [\OGame\Http\Controllers\Admin\UserManagementController::class, 'unban'])->name('users.unban');
     
     // Image Management
     Route::get('/images', [\OGame\Http\Controllers\Admin\ImageManagementController::class, 'index'])->name('images.index');

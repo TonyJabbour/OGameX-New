@@ -45,6 +45,11 @@ use Spatie\Permission\Traits\HasRoles;
  * @property int|null $character_class
  * @property bool $character_class_free_used
  * @property Carbon|null $character_class_changed_at
+ * @property bool $is_banned
+ * @property Carbon|null $banned_at
+ * @property Carbon|null $banned_until
+ * @property string|null $ban_reason
+ * @property int|null $banned_by_user_id
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
  * @property-read UserTech|null $tech
@@ -148,6 +153,9 @@ class User extends Authenticatable
         'character_class_free_used' => 'boolean',
         'character_class_changed_at' => 'datetime',
         'alliance_left_at' => 'datetime',
+        'is_banned' => 'boolean',
+        'banned_at' => 'datetime',
+        'banned_until' => 'datetime',
     ];
 
     /**
@@ -262,5 +270,99 @@ class User extends Authenticatable
     public function hasCharacterClass(): bool
     {
         return $this->character_class !== null;
+    }
+
+    /**
+     * Ban this user.
+     *
+     * @param string|null $reason
+     * @param Carbon|null $until
+     * @param int|null $bannedByUserId
+     * @return void
+     */
+    public function ban(?string $reason = null, ?Carbon $until = null, ?int $bannedByUserId = null): void
+    {
+        $this->is_banned = true;
+        $this->banned_at = now();
+        $this->banned_until = $until;
+        $this->ban_reason = $reason;
+        $this->banned_by_user_id = $bannedByUserId;
+        $this->save();
+    }
+
+    /**
+     * Unban this user.
+     *
+     * @return void
+     */
+    public function unban(): void
+    {
+        $this->is_banned = false;
+        $this->banned_at = null;
+        $this->banned_until = null;
+        $this->ban_reason = null;
+        $this->banned_by_user_id = null;
+        $this->save();
+    }
+
+    /**
+     * Check if user is currently banned.
+     *
+     * @return bool
+     */
+    public function isBanned(): bool
+    {
+        // Quick return if not banned at all
+        if (!$this->is_banned) {
+            return false;
+        }
+
+        // If no expiry date, it's a permanent ban
+        if (!$this->banned_until) {
+            return true;
+        }
+
+        // Check if temporary ban has expired (use timestamp comparison for performance)
+        if ($this->banned_until->getTimestamp() < time()) {
+            // Only unban if not already processing to avoid multiple DB writes
+            if (!$this->isDirty()) {
+                $this->unban();
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the user who banned this user.
+     *
+     * @return BelongsTo
+     */
+    public function bannedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'banned_by_user_id');
+    }
+
+    /**
+     * Scope a query to only include non-banned users.
+     *
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeNotBanned(Builder $query): Builder
+    {
+        return $query->where('is_banned', false);
+    }
+
+    /**
+     * Scope a query to only include banned users.
+     *
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeBanned(Builder $query): Builder
+    {
+        return $query->where('is_banned', true);
     }
 }

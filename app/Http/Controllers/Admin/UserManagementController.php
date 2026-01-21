@@ -10,6 +10,7 @@ use OGame\Models\User;
 use OGame\Models\Planet;
 use OGame\Services\PlayerService;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class UserManagementController extends OGameController
 {
@@ -202,7 +203,7 @@ class UserManagementController extends OGameController
     }
 
     /**
-     * Deletes a user.
+     * Deletes a user and all related data.
      *
      * @param int $id
      * @return RedirectResponse
@@ -216,12 +217,158 @@ class UserManagementController extends OGameController
             return redirect()->back()->with('error', 'Cannot delete your own account');
         }
         
-        // Delete all user's planets
-        Planet::where('user_id', $id)->delete();
+        DB::beginTransaction();
         
-        // Delete user
-        $user->delete();
+        try {
+            // 1. Clear references to avoid foreign key constraint violations
+            $user->planet_current = null;
+            $user->alliance_id = null;
+            $user->save();
+            
+            // 2. Delete fleet missions (both from and to this user's planets)
+            $planetIds = Planet::where('user_id', $id)->pluck('id')->toArray();
+            if (!empty($planetIds)) {
+                \OGame\Models\FleetMission::whereIn('planet_id_from', $planetIds)
+                    ->orWhereIn('planet_id_to', $planetIds)
+                    ->delete();
+            }
+            
+            // 3. Delete fleet unions created by user
+            \OGame\Models\FleetUnion::where('user_id', $id)->delete();
+            
+            // 4. Delete fleet templates
+            \OGame\Models\FleetTemplate::where('user_id', $id)->delete();
+            
+            // 5. Delete messages (sent and received)
+            \OGame\Models\Message::where('sender_user_id', $id)
+                ->orWhere('receiver_user_id', $id)
+                ->delete();
+            
+            // 6. Delete notes
+            \OGame\Models\Note::where('user_id', $id)->delete();
+            
+            // 7. Delete espionage reports
+            \OGame\Models\EspionageReport::where('planet_user_id', $id)->delete();
+            
+            // 8. Update battle reports (set user_id to null as per migration)
+            \OGame\Models\BattleReport::where('planet_user_id', $id)
+                ->update(['planet_user_id' => null]);
+            
+            // 9. Delete buddy requests (sent and received)
+            \OGame\Models\BuddyRequest::where('sender_user_id', $id)
+                ->orWhere('receiver_user_id', $id)
+                ->delete();
+            
+            // 10. Delete ignored players
+            \OGame\Models\IgnoredPlayer::where('user_id', $id)
+                ->orWhere('ignored_user_id', $id)
+                ->delete();
+            
+            // 11. Delete alliance applications
+            \OGame\Models\AllianceApplication::where('user_id', $id)->delete();
+            
+            // 12. Delete alliance membership
+            \OGame\Models\AllianceMember::where('user_id', $id)->delete();
+            
+            // 13. Handle alliances founded by this user (delete them)
+            $foundedAlliances = \OGame\Models\Alliance::where('founder_user_id', $id)->get();
+            foreach ($foundedAlliances as $alliance) {
+                \OGame\Models\AllianceMember::where('alliance_id', $alliance->id)->delete();
+                \OGame\Models\AllianceApplication::where('alliance_id', $alliance->id)->delete();
+                \OGame\Models\AllianceRank::where('alliance_id', $alliance->id)->delete();
+                \OGame\Models\AllianceHighscore::where('alliance_id', $alliance->id)->delete();
+                $alliance->delete();
+            }
+            
+            // 14. Delete dark matter transactions
+            \OGame\Models\DarkMatterTransaction::where('user_id', $id)->delete();
+            
+            // 15. Delete merchant calls
+            \OGame\Models\MerchantCall::where('user_id', $id)->delete();
+            
+            // 16. Delete user highscore
+            \OGame\Models\Highscore::where('player_id', $id)->delete();
+            
+            // 17. Delete user tech
+            \OGame\Models\UserTech::where('user_id', $id)->delete();
+            
+            // 18. Delete all user's planets (cascades to building/research/unit queues)
+            Planet::where('user_id', $id)->delete();
+            
+            // 19. Clear any references to this user as banner
+            User::where('banned_by_user_id', $id)->update(['banned_by_user_id' => null]);
+            
+            // 20. Delete the user
+            $user->delete();
+            
+            DB::commit();
+            
+            return redirect()->route('admin.users.index')->with('success', 'User and all related data deleted successfully');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to delete user: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Ban a user.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return RedirectResponse
+     */
+    public function ban(Request $request, int $id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
         
-        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully');
+        // Prevent banning yourself
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Cannot ban your own account');
+        }
+        
+        // Prevent banning admins (unless you're also admin)
+        if ($user->hasRole('admin') && !auth()->user()->hasRole('admin')) {
+            return redirect()->back()->with('error', 'Cannot ban administrators');
+        }
+        
+        $validated = $request->validate([
+            'ban_reason' => 'required|string|max:500',
+            'ban_duration' => 'required|in:permanent,1day,3days,7days,30days',
+        ]);
+        
+        $bannedUntil = null;
+        if ($validated['ban_duration'] !== 'permanent') {
+            $days = match($validated['ban_duration']) {
+                '1day' => 1,
+                '3days' => 3,
+                '7days' => 7,
+                '30days' => 30,
+            };
+            $bannedUntil = now()->addDays($days);
+        }
+        
+        $user->ban($validated['ban_reason'], $bannedUntil, auth()->id());
+        
+        $durationText = $bannedUntil ? "until {$bannedUntil->format('Y-m-d H:i')}" : 'permanently';
+        return redirect()->back()->with('success', "User {$user->username} has been banned {$durationText}");
+    }
+
+    /**
+     * Unban a user.
+     *
+     * @param int $id
+     * @return RedirectResponse
+     */
+    public function unban(int $id): RedirectResponse
+    {
+        $user = User::findOrFail($id);
+        
+        if (!$user->is_banned) {
+            return redirect()->back()->with('error', 'User is not banned');
+        }
+        
+        $user->unban();
+        
+        return redirect()->back()->with('success', "User {$user->username} has been unbanned");
     }
 }
