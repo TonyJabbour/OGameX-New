@@ -234,16 +234,19 @@ Route::middleware(['auth', 'globalgame', 'locale', 'firstlogin'])->group(functio
     Route::get('/lang/{lang}', [LanguageController::class, 'switchLang'])->name('language.switch');
 });
 
-// Group: all logged in pages:
-Route::middleware(['auth', 'globalgame', 'locale', 'admin'])->group(function () {
-    // Server settings
-    Route::get('/admin/server-settings', [AdminServerSettingsController::class, 'index'])->name('admin.serversettings.index');
-    Route::post('/admin/server-settings', [AdminServerSettingsController::class, 'update'])->name('admin.serversettings.update');
-
-    // Developer shortcuts
-    Route::get('/admin/developer-shortcuts', [DeveloperShortcutsController::class, 'index'])->name('admin.developershortcuts.index');
-    Route::post('/admin/developer-shortcuts', [DeveloperShortcutsController::class, 'update'])->name('admin.developershortcuts.update');
-    Route::post('/admin/developer-shortcuts/resources', [DeveloperShortcutsController::class, 'updateResources'])->name('admin.developershortcuts.update-resources');
-    Route::post('/admin/developershortcuts/create-at-coords', [DeveloperShortcutsController::class, 'createAtCoords'])->name('admin.developershortcuts.create-at-coords');
-    Route::post('/admin/developershortcuts/create-debris', [DeveloperShortcutsController::class, 'createDebris'])->name('admin.developershortcuts.create-debris');
+// Admin Panel Routes
+Route::middleware(['auth', 'globalgame', 'locale', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
+    Route::get('/', [AdminServerSettingsController::class, 'dashboard'])->name('dashboard');
+    
+    // Server Settings
+    Route::get('/server-settings', [AdminServerSettingsController::class, 'index'])->name('serversettings.index');
+    Route::post('/server-settings', [AdminServerSettingsController::class, 'update'])->name('serversettings.update');
+    
+    // Developer Tools
+    Route::get('/developer-tools', [DeveloperShortcutsController::class, 'index'])->name('developershortcuts.index');
+    Route::post('/developer-tools', [DeveloperShortcutsController::class, 'update'])->name('developershortcuts.update');
+    Route::post('/developer-tools/resources', [DeveloperShortcutsController::class, 'updateResources'])->name('developershortcuts.update-resources');
+    Route::post('/developer-tools/create-at-coords', [DeveloperShortcutsController::class, 'createAtCoords'])->name('developershortcuts.create-at-coords');
+    Route::post('/developer-tools/create-debris', [DeveloperShortcutsController::class, 'createDebris'])->name('developershortcuts.create-debris');
 });

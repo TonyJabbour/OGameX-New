@@ -29,7 +29,7 @@ class DeveloperShortcutsController extends OGameController
         // Get all unit objects
         $units = ObjectService::getUnitObjects();
 
-        return view('ingame.admin.developershortcuts')->with([
+        return view('admin.developer-tools')->with([
             'units' => $units,
             'buildings' => [...ObjectService::getBuildingObjects(), ...ObjectService::getStationObjects()],
             'research' => ObjectService::getResearchObjects(),

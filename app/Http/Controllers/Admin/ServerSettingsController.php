@@ -13,6 +13,22 @@ use OGame\Services\SettingsService;
 class ServerSettingsController extends OGameController
 {
     /**
+     * Shows the admin dashboard.
+     *
+     * @param SettingsService $settingsService
+     * @return View
+     */
+    public function dashboard(SettingsService $settingsService): View
+    {
+        return view('admin.dashboard')->with([
+            'universe_name' => $settingsService->universeName(),
+            'economy_speed' => $settingsService->economySpeed(),
+            'fleet_speed_war' => $settingsService->fleetSpeedWar(),
+            'battle_engine' => $settingsService->battleEngine(),
+        ]);
+    }
+
+    /**
      * Shows the server settings page.
      *
      * @param PlayerService $player
@@ -21,7 +37,7 @@ class ServerSettingsController extends OGameController
      */
     public function index(PlayerService $player, SettingsService $settingsService): View
     {
-        return view('ingame.admin.serversettings')->with([
+        return view('admin.server-settings')->with([
             'fleet_speed_war' => $settingsService->fleetSpeedWar(),
             'fleet_speed_holding' => $settingsService->fleetSpeedHolding(),
             'fleet_speed_peaceful' => $settingsService->fleetSpeedPeaceful(),
