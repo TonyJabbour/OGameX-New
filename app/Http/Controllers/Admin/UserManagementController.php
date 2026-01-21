@@ -73,7 +73,7 @@ class UserManagementController extends OGameController
         $user = User::findOrFail($id);
         $planets = Planet::where('user_id', $id)->get();
         
-        return view('admin.users.show')->with([
+        return view('admin.users.show-modern')->with([
             'user' => $user,
             'planets' => $planets,
         ]);

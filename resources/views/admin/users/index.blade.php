@@ -8,31 +8,19 @@
     <p class="page-description">Manage players and their accounts</p>
 </div>
 
-@if (session('success'))
-    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; color: #10b981; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-        {{ session('success') }}
-    </div>
-@endif
-
-@if (session('error'))
-    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; color: #ef4444; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1.5rem;">
-        {{ session('error') }}
-    </div>
-@endif
-
 <!-- Stats Cards -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-    <div class="card">
-        <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Total Users</div>
-        <div style="font-size: 2rem; font-weight: 700; color: var(--primary);">{{ $stats['total'] }}</div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value">{{ $stats['total'] }}</div>
     </div>
-    <div class="card">
-        <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">Active (7 days)</div>
-        <div style="font-size: 2rem; font-weight: 700; color: var(--success);">{{ $stats['active'] }}</div>
+    <div class="stat-card">
+        <div class="stat-label">Active (7 days)</div>
+        <div class="stat-value">{{ $stats['active'] }}</div>
     </div>
-    <div class="card">
-        <div style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 0.5rem;">On Vacation</div>
-        <div style="font-size: 2rem; font-weight: 700; color: var(--warning);">{{ $stats['vacation'] }}</div>
+    <div class="stat-card">
+        <div class="stat-label">On Vacation</div>
+        <div class="stat-value">{{ $stats['vacation'] }}</div>
     </div>
 </div>
 
@@ -64,54 +52,69 @@
 <div class="card">
     <div class="card-header">Players ({{ $users->total() }})</div>
     
-    <div style="overflow-x: auto;">
-        <table style="width: 100%; border-collapse: collapse;">
+    <div class="table-container">
+        <table>
             <thead>
-                <tr style="border-bottom: 1px solid var(--border);">
-                    <th style="padding: 1rem; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">ID</th>
-                    <th style="padding: 1rem; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">Username</th>
-                    <th style="padding: 1rem; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">Email</th>
-                    <th style="padding: 1rem; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">Dark Matter</th>
-                    <th style="padding: 1rem; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">Status</th>
-                    <th style="padding: 1rem; text-align: left; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">Last Active</th>
-                    <th style="padding: 1rem; text-align: right; color: var(--text-muted); font-weight: 600; font-size: 0.875rem;">Actions</th>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Dark Matter</th>
+                    <th>Status</th>
+                    <th>Last Active</th>
+                    <th style="text-align: right;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($users as $user)
-                <tr style="border-bottom: 1px solid rgba(59, 130, 246, 0.1);">
-                    <td style="padding: 1rem; color: var(--text-secondary);">#{{ $user->id }}</td>
-                    <td style="padding: 1rem;">
-                        <div style="font-weight: 600; color: var(--text-primary);">{{ $user->username }}</div>
-                        @if($user->hasRole('admin'))
-                            <span style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1e293b; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600;">ADMIN</span>
-                        @endif
+                <tr>
+                    <td><span style="color: var(--text-muted); font-family: monospace;">#{{ $user->id }}</span></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #8b5cf6); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.875rem;">
+                                {{ substr($user->username, 0, 1) }}
+                            </div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ $user->username }}</div>
+                                @if($user->hasRole('admin'))
+                                    <span class="badge" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1e293b; border: none; font-size: 0.6875rem;">ADMIN</span>
+                                @endif
+                            </div>
+                        </div>
                     </td>
-                    <td style="padding: 1rem; color: var(--text-secondary);">{{ $user->email }}</td>
-                    <td style="padding: 1rem; color: var(--text-secondary);">{{ number_format($user->dark_matter) }}</td>
-                    <td style="padding: 1rem;">
+                    <td style="color: var(--text-secondary);">{{ $user->email }}</td>
+                    <td>
+                        <span style="font-family: monospace; color: var(--primary); font-weight: 600;">{{ number_format($user->dark_matter) }}</span>
+                    </td>
+                    <td>
                         @if($user->vacation_mode)
-                            <span style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;">Vacation</span>
+                            <span class="badge badge-warning">Vacation</span>
                         @elseif($user->isOnline())
-                            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;">Online</span>
+                            <span class="badge badge-success">Online</span>
                         @else
-                            <span style="background: rgba(100, 116, 139, 0.2); color: #94a3b8; padding: 0.25rem 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;">Offline</span>
+                            <span class="badge" style="background: rgba(100, 116, 139, 0.15); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.3);">Offline</span>
                         @endif
                     </td>
-                    <td style="padding: 1rem; color: var(--text-secondary);">
+                    <td style="color: var(--text-secondary); font-size: 0.875rem;">
                         @if($user->time)
                             {{ \Carbon\Carbon::createFromTimestamp((int)$user->time)->diffForHumans() }}
                         @else
-                            Never
+                            <span style="color: var(--text-muted);">Never</span>
                         @endif
                     </td>
-                    <td style="padding: 1rem; text-align: right;">
-                        <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View</a>
+                    <td style="text-align: right;">
+                        <a href="{{ route('admin.users.show', $user->id) }}" class="btn btn-primary" style="padding: 0.625rem 1.25rem; font-size: 0.875rem;">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            View
+                        </a>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" style="padding: 2rem; text-align: center; color: var(--text-muted);">No users found</td>
+                    <td colspan="7" style="padding: 3rem; text-align: center; color: var(--text-muted);">No users found</td>
                 </tr>
                 @endforelse
             </tbody>
